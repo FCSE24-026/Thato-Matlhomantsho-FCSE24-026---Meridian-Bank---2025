@@ -1,0 +1,2 @@
+# Thato-Matlhomantsho-FCSE24-026---Meridian-Bank---2025
+The Vault 47 Banking System is an object-oriented financial application designed to model core banking processes with a focus on reliability, modularity, and data integrity. It demonstrates encapsulation, inheritance, polymorphism, and abstraction through practical banking scenarios such as deposits, withdrawals, and automated interest management.
