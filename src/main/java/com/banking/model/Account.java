@@ -1,3 +1,8 @@
+// ============================================================================
+// FIXED: src/main/java/com/banking/model/Account.java
+// Added missing getter methods: getAccountType(), getBranch(), getDateOpened()
+// ============================================================================
+
 package com.banking.model;
 
 import java.io.Serializable;
@@ -32,6 +37,35 @@ public abstract class Account implements Serializable {
     public abstract String getAccountDetails();
     public abstract void updateBalance(double amount);
     
+    // ==================== ADDED GETTER METHODS ====================
+    // These were missing and causing compilation errors
+    
+    /**
+     * Get account type (Savings Account, Investment Account, Cheque Account)
+     */
+    public String getAccountType() {
+        return this.getClass().getSimpleName()
+            .replace("Account", "")
+            .isEmpty() ? "Account" : 
+            this.getClass().getSimpleName().replace("Account", "") + " Account";
+    }
+    
+    /**
+     * Get branch where account is held
+     */
+    public String getBranch() {
+        return branch;
+    }
+    
+    /**
+     * Get date when account was opened
+     */
+    public LocalDate getDateOpened() {
+        return dateOpened;
+    }
+    
+    // ==================== OTHER GETTER METHODS ====================
+    
     public void addTransaction(Transaction transaction) {
         if (transaction != null && transaction.validateTransaction()) {
             transactions.add(transaction);
@@ -48,6 +82,10 @@ public abstract class Account implements Serializable {
     
     public void setBranch(String branch) {
         this.branch = branch;
+    }
+    
+    public void setDateOpened(LocalDate dateOpened) {
+        this.dateOpened = dateOpened;
     }
     
     @Override

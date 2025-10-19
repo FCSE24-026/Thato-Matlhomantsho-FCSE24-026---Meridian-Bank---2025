@@ -4,7 +4,7 @@ import java.time.LocalDate;
 
 public class SavingsAccount extends Account {
     private static final long serialVersionUID = 1L;
-    private static final double MONTHLY_INTEREST_RATE = 0.0005;
+    private static final double MONTHLY_INTEREST_RATE = 0.0005; // 0.05%
     
     private double interestRate;
     private LocalDate lastInterestDate;

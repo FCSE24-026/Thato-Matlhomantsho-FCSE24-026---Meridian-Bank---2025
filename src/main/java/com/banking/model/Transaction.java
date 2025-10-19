@@ -38,6 +38,7 @@ public class Transaction implements Serializable {
             transactionId, transactionType, amount, date.format(formatter), accountNumber, status);
     }
     
+    // Getters and Setters
     public String getTransactionId() { return transactionId; }
     public String getTransactionType() { return transactionType; }
     public double getAmount() { return amount; }

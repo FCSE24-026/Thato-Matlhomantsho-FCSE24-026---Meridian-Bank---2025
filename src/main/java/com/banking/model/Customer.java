@@ -64,6 +64,7 @@ public class Customer implements Serializable {
         System.out.println("=========================================\n");
     }
     
+    // Getters
     public String getCustomerId() { return customerId; }
     public String getFirstName() { return firstName; }
     public String getSurname() { return surname; }
@@ -73,6 +74,7 @@ public class Customer implements Serializable {
     public LocalDate getDateOfBirth() { return dateOfBirth; }
     public List<Account> getAccounts() { return new ArrayList<>(accounts); }
     
+    // Setters
     public void setEmail(String email) { this.email = email; }
     public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
     public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }

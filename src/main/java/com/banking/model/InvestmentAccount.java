@@ -5,7 +5,7 @@ import java.time.LocalDate;
 public class InvestmentAccount extends Account {
     private static final long serialVersionUID = 1L;
     private static final double MINIMUM_OPENING = 500.0;
-    private static final double MONTHLY_INTEREST_RATE = 0.05;
+    private static final double MONTHLY_INTEREST_RATE = 0.05; // 5%
     
     private double interestRate;
     private double minimumBalance;
@@ -99,3 +99,4 @@ public class InvestmentAccount extends Account {
     public void setInterestRate(double rate) { this.interestRate = rate; }
     public static double getMinimumOpening() { return MINIMUM_OPENING; }
 }
+
