@@ -68,6 +68,13 @@ public class Bank {
             .orElse(null);
     }
     
+    public Customer getCustomerByEmail(String email) {
+        return customers.stream()
+            .filter(c -> c.getEmail().equals(email))
+            .findFirst()
+            .orElse(null);
+    }
+    
     private String generateAccountNumber(String type) {
         return type.substring(0, 3).toUpperCase() + "_" + System.nanoTime();
     }

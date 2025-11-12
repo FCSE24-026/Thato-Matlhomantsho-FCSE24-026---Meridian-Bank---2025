@@ -115,4 +115,100 @@ public class AccountController {
             .mapToDouble(Account::getBalance)
             .sum();
     }
+    
+    /**
+     * Get total balance for a user (by customer ID) - used by ModernBankingApp
+     */
+    public double getTotalBalance(int customerId) {
+        // Find customer by ID and return total balance
+        for (Customer customer : bank.getAllCustomers()) {
+            if (customer.getCustomerId().hashCode() == customerId) {
+                return getTotalCustomerBalance(customer);
+            }
+        }
+        return 0.0;
+    }
+    
+    /**
+     * Get user accounts by user ID - used by ModernBankingApp
+     */
+    public List<Account> getUserAccounts(int customerId) {
+        // Find customer by ID and return accounts
+        for (Customer customer : bank.getAllCustomers()) {
+            if (customer.getCustomerId().hashCode() == customerId) {
+                return customer.getAccounts();
+            }
+        }
+        return new ArrayList<>();
+    }
+    
+    /**
+     * Get transaction history for a user - used by ModernBankingApp
+     */
+    public List<Transaction> getTransactionHistory(int customerId) {
+        List<Transaction> allTransactions = new ArrayList<>();
+        for (Customer customer : bank.getAllCustomers()) {
+            if (customer.getCustomerId().hashCode() == customerId) {
+                for (Account account : customer.getAccounts()) {
+                    allTransactions.addAll(account.getTransactions());
+                }
+            }
+        }
+        return allTransactions;
+    }
+    
+    /**
+     * Create account for user - used by ModernBankingApp
+     */
+    public boolean createAccount(int customerId, String accountType) {
+        for (Customer customer : bank.getAllCustomers()) {
+            if (customer.getCustomerId().hashCode() == customerId) {
+                Account account = bank.openAccount(customer, accountType.toLowerCase());
+                return account != null;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Transfer funds between accounts - used by ModernBankingApp
+     */
+    public boolean transferFunds(String fromAccountId, String toAccountId, 
+                                 double amount, String description) {
+        if (fromAccountId == null || toAccountId == null || amount <= 0) {
+            System.out.println("✗ Invalid transfer parameters");
+            return false;
+        }
+        
+        // Find accounts by ID
+        Account fromAccount = null;
+        Account toAccount = null;
+        
+        for (Account account : bank.getAllAccounts()) {
+            if (account.getAccountId().equals(fromAccountId)) {
+                fromAccount = account;
+            }
+            if (account.getAccountId().equals(toAccountId)) {
+                toAccount = account;
+            }
+        }
+        
+        if (fromAccount == null || toAccount == null) {
+            System.out.println("✗ One or both accounts not found");
+            return false;
+        }
+        
+        if (fromAccount.getBalance() < amount) {
+            System.out.println("✗ Insufficient funds");
+            return false;
+        }
+        
+        // Perform transfer
+        boolean success = fromAccount.withdraw(amount) && toAccount.deposit(amount);
+        if (success) {
+            System.out.println("✓ Transfer of " + amount + " completed: " + 
+                             (description != null ? description : "No description"));
+        }
+        return success;
+    }
 }

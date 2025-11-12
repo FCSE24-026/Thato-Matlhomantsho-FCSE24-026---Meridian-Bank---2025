@@ -46,6 +46,32 @@ public class Transaction implements Serializable {
     public String getAccountNumber() { return accountNumber; }
     public String getStatus() { return status; }
     
+    /**
+     * Alias for getDate() - used by ModernBankingApp
+     */
+    public LocalDate getTransactionDate() {
+        return this.date;
+    }
+    
+    /**
+     * Get transaction description - used by ModernBankingApp
+     */
+    public String getDescription() {
+        return this.transactionType + ": " + this.transactionId;
+    }
+    
+    /**
+     * Get from account ID - placeholder implementation
+     */
+    public int getFromAccountId() {
+        // Extract numeric ID from account number or return 0
+        try {
+            return Integer.parseInt(accountNumber.replaceAll("[^0-9]", ""));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+    
     public void setTransactionId(String transactionId) { this.transactionId = transactionId; }
     public void setTransactionType(String transactionType) { this.transactionType = transactionType; }
     public void setAmount(double amount) { this.amount = amount; }

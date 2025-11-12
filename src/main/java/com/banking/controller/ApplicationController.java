@@ -1,8 +1,6 @@
 package com.banking.controller;
 
-import com.banking.model.*;
 import com.banking.service.*;
-import java.util.*;
 
 public class ApplicationController {
     private Bank bank;

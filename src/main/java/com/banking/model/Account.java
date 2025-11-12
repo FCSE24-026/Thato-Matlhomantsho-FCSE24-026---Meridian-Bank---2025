@@ -51,6 +51,20 @@ public abstract class Account implements Serializable {
     }
     
     /**
+     * Get account ID (alias for account number)
+     */
+    public String getAccountId() {
+        return this.accountNumber;
+    }
+    
+    /**
+     * Check if account is active (always true for this implementation)
+     */
+    public boolean isActive() {
+        return true;
+    }
+    
+    /**
      * Get branch where account is held
      */
     public String getBranch() {

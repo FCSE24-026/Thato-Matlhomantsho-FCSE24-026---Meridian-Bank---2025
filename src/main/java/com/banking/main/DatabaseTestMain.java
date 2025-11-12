@@ -3,7 +3,6 @@ package com.banking.main;
 import com.banking.model.*;
 import com.banking.persistence.*;
 import java.time.LocalDate;
-import java.util.*;
 
 public class DatabaseTestMain {
     public static void main(String[] args) {
