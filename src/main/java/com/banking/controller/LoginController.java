@@ -3,6 +3,8 @@ package com.banking.controller;
 import com.banking.model.*;
 import com.banking.service.*;
 import com.banking.main.User;
+import com.banking.main.Role;
+import com.banking.util.PasswordUtil;
 
 // ============================================================================
 // 1. LOGIN CONTROLLER - Handles authentication
@@ -108,7 +110,8 @@ public class LoginController {
                            username, 
                            "", // password not used 
                            customer.getEmail(),
-                           customer.getPhoneNumber());
+                           customer.getPhoneNumber(),
+                           customer.getRole());
         }
         return null;
     }
@@ -135,6 +138,14 @@ public class LoginController {
      */
     public boolean registerUser(String firstName, String lastName, String email, 
                                 String phone, String address) {
+        return registerUser(firstName, lastName, email, phone, address, Role.CUSTOMER);
+    }
+
+    /**
+     * Register a new user with specified role
+     */
+    public boolean registerUser(String firstName, String lastName, String email, 
+                                String phone, String address, Role role) {
         if (firstName == null || firstName.isEmpty() || 
             lastName == null || lastName.isEmpty() ||
             email == null || email.isEmpty()) {
@@ -148,14 +159,14 @@ public class LoginController {
             return false;
         }
         
-        // Create new customer
+        // Create new customer with specified role
         String customerId = "CUST_" + System.nanoTime();
         Customer newCustomer = new Customer(customerId, firstName, lastName, 
                                            address != null ? address : "", 
                                            phone != null ? phone : "", 
-                                           email);
+                                           email, role);
         bank.addCustomer(newCustomer);
-        System.out.println("✓ User registered successfully with ID: " + customerId);
+        System.out.println("✓ User registered successfully with ID: " + customerId + " (Role: " + role.getDisplayName() + ")");
         return true;
     }
 }

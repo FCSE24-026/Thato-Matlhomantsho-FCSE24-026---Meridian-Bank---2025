@@ -3,6 +3,7 @@ package com.banking.model;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.*;
+import com.banking.main.Role;
 
 public class Customer implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -14,10 +15,11 @@ public class Customer implements Serializable {
     private String phoneNumber;
     private String email;
     private LocalDate dateOfBirth;
+    private Role role;
     private List<Account> accounts;
     
     public Customer(String customerId, String firstName, String surname, String address,
-                   String phoneNumber, String email) {
+                   String phoneNumber, String email, Role role) {
         this.customerId = customerId;
         this.firstName = firstName;
         this.surname = surname;
@@ -25,7 +27,13 @@ public class Customer implements Serializable {
         this.phoneNumber = phoneNumber;
         this.email = email;
         this.dateOfBirth = LocalDate.now();
+        this.role = role;
         this.accounts = new ArrayList<>();
+    }
+    
+    public Customer(String customerId, String firstName, String surname, String address,
+                   String phoneNumber, String email) {
+        this(customerId, firstName, surname, address, phoneNumber, email, Role.CUSTOMER);
     }
     
     public void setAddress(String address) {
@@ -72,6 +80,7 @@ public class Customer implements Serializable {
     public String getPhoneNumber() { return phoneNumber; }
     public String getEmail() { return email; }
     public LocalDate getDateOfBirth() { return dateOfBirth; }
+    public Role getRole() { return role; }
     public List<Account> getAccounts() { return new ArrayList<>(accounts); }
     
     // Setters

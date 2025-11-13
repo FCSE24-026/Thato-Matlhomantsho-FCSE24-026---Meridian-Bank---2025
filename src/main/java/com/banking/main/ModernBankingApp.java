@@ -13,6 +13,7 @@ import javafx.scene.layout.Priority;
 import com.banking.controller.LoginController;
 import com.banking.controller.AccountController;
 import com.banking.model.Account;
+import com.banking.model.Customer;
 import com.banking.model.Transaction;
 import com.banking.service.Bank;
 
@@ -34,7 +35,21 @@ public class ModernBankingApp extends Application {
         this.bank = new Bank("Meridian Bank");
         this.authController = new LoginController(bank);
         this.accountController = new AccountController(bank);
+        
+        // Initialize with seed data (test accounts)
+        initializeSeedData();
+        
         showLoginScreen();
+    }
+
+    private void initializeSeedData() {
+        // Create test users with different roles
+        authController.registerUser("Admin", "User", "admin@bank.com", "555-0001", "123 Admin St", Role.ADMIN);
+        authController.registerUser("Teller", "Smith", "teller@bank.com", "555-0002", "456 Teller Ave", Role.TELLER);
+        authController.registerUser("John", "Doe", "john.doe@bank.com", "555-0003", "789 Customer Rd", Role.CUSTOMER);
+        authController.registerUser("Jane", "Smith", "jane.smith@bank.com", "555-0004", "321 Client Lane", Role.CUSTOMER);
+        
+        System.out.println("✓ Seed data initialized with test users");
     }
 
     private void showLoginScreen() {
@@ -159,11 +174,13 @@ public class ModernBankingApp extends Application {
                 "-fx-border-width: 1; -fx-border-radius: 8; -fx-padding: 30; " +
                 "-fx-effect: dropshadow(gaussian, rgba(0,212,255,0.15), 10, 0, 0, 2);");
 
-        TextField usernameField = createStyledTextField("Choose username");
-        PasswordField passwordField = createStyledPasswordField("Enter password");
-        PasswordField confirmField = createStyledPasswordField("Confirm password");
-        TextField emailField = createStyledTextField("Enter email address");
-        TextField phoneField = createStyledTextField("Enter phone number");
+    TextField firstNameField = createStyledTextField("First name");
+    TextField lastNameField = createStyledTextField("Last name");
+    TextField usernameField = createStyledTextField("Choose username");
+    PasswordField passwordField = createStyledPasswordField("Enter password");
+    PasswordField confirmField = createStyledPasswordField("Confirm password");
+    TextField emailField = createStyledTextField("Enter email address");
+    TextField phoneField = createStyledTextField("Enter phone number");
 
         Label messageLabel = new Label();
         messageLabel.setWrapText(true);
@@ -184,13 +201,13 @@ public class ModernBankingApp extends Application {
         backButton.setStyle("-fx-background-color: #1a1f3a; -fx-text-fill: #00d4ff; " +
                 "-fx-border-color: #00d4ff; -fx-border-width: 2; -fx-border-radius: 6; -fx-cursor: hand;");
 
-        signupButton.setOnAction(e -> {
-            if (authController.registerUser(
-                    usernameField.getText().trim(),
-                    passwordField.getText(),
-                    confirmField.getText(),
-                    emailField.getText().trim(),
-                    phoneField.getText().trim())) {
+    signupButton.setOnAction(e -> {
+        if (authController.registerUser(
+            firstNameField.getText().trim(),
+            lastNameField.getText().trim(),
+            emailField.getText().trim(),
+            phoneField.getText().trim(),
+            "")) {
                 messageLabel.setText("✓ Registration successful! Returning to login...");
                 messageLabel.setStyle("-fx-text-fill: #1abc9c; -fx-font-size: 11; -fx-padding: 10; " +
                         "-fx-background-color: rgba(26,188,156,0.1); -fx-border-radius: 4;");
@@ -212,6 +229,10 @@ public class ModernBankingApp extends Application {
         buttonBox.getChildren().addAll(signupButton, backButton);
 
         formBox.getChildren().addAll(
+            createStyledLabel("FIRST NAME"),
+            firstNameField,
+            createStyledLabel("LAST NAME"),
+            lastNameField,
             createStyledLabel("USERNAME"),
             usernameField,
             createStyledLabel("PASSWORD"),
@@ -238,6 +259,723 @@ public class ModernBankingApp extends Application {
     }
 
     private void showDashboard() {
+        // Route to role-specific dashboard
+        if (currentUser.getRole() == Role.ADMIN) {
+            showAdminDashboard();
+        } else if (currentUser.getRole() == Role.TELLER) {
+            showTellerDashboard();
+        } else {
+            showCustomerDashboard();
+        }
+    }
+
+    private void showAdminDashboard() {
+        VBox mainContainer = new VBox(15);
+        mainContainer.setPadding(new Insets(0));
+        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+
+        HBox headerBox = new HBox(20);
+        headerBox.setPadding(new Insets(25));
+        headerBox.setStyle("-fx-background-color: linear-gradient(to right, #c0392b, #8b0000); " +
+                "-fx-border-color: #e74c3c; -fx-border-width: 0 0 2 0;");
+        headerBox.setAlignment(Pos.CENTER_LEFT);
+
+        Label welcomeLabel = new Label("🔐 ADMIN PANEL - " + currentUser.getUsername().toUpperCase());
+        welcomeLabel.setStyle("-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #e74c3c;");
+
+        HBox spacer = new HBox();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button logoutButton = new Button("LOGOUT");
+        logoutButton.setPrefWidth(120);
+        logoutButton.setPrefHeight(40);
+        logoutButton.setStyle("-fx-background-color: linear-gradient(to right, #e74c3c, #c0392b); " +
+                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
+        logoutButton.setOnAction(e -> {
+            currentUser = null;
+            showLoginScreen();
+        });
+
+        headerBox.getChildren().addAll(welcomeLabel, spacer, logoutButton);
+
+        VBox contentPanel = new VBox(15);
+        contentPanel.setPadding(new Insets(30));
+        contentPanel.setStyle("-fx-background-color: #0a0e27;");
+
+        Label titleLabel = new Label("ADMINISTRATOR FUNCTIONS");
+        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #e74c3c; -fx-letter-spacing: 2;");
+
+        HBox buttonRowBox = new HBox(15);
+        buttonRowBox.setAlignment(Pos.CENTER_LEFT);
+
+        Button viewUsersButton = new Button("👥 VIEW ALL USERS");
+        viewUsersButton.setPrefWidth(180);
+        viewUsersButton.setPrefHeight(50);
+        viewUsersButton.setStyle("-fx-background-color: linear-gradient(to right, #c0392b, #8b0000); " +
+                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
+        viewUsersButton.setOnAction(e -> showViewAllUsersScreen());
+
+        Button manageAccountsButton = new Button("💼 MANAGE ACCOUNTS");
+        manageAccountsButton.setPrefWidth(180);
+        manageAccountsButton.setPrefHeight(50);
+        manageAccountsButton.setStyle("-fx-background-color: linear-gradient(to right, #c0392b, #8b0000); " +
+                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
+        manageAccountsButton.setOnAction(e -> showManageAccountsScreen());
+
+        Button systemStatsButton = new Button("📊 SYSTEM STATISTICS");
+        systemStatsButton.setPrefWidth(180);
+        systemStatsButton.setPrefHeight(50);
+        systemStatsButton.setStyle("-fx-background-color: linear-gradient(to right, #c0392b, #8b0000); " +
+                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
+        systemStatsButton.setOnAction(e -> showSystemStatisticsScreen());
+
+        buttonRowBox.getChildren().addAll(viewUsersButton, manageAccountsButton, systemStatsButton);
+        contentPanel.getChildren().addAll(titleLabel, buttonRowBox);
+
+        mainContainer.getChildren().addAll(headerBox, contentPanel);
+
+        Scene scene = new Scene(mainContainer, 900, 400);
+        primaryStage.setTitle("Meridian Bank - Admin Dashboard");
+        primaryStage.setScene(scene);
+    }
+
+    private void showTellerDashboard() {
+        VBox mainContainer = new VBox(15);
+        mainContainer.setPadding(new Insets(0));
+        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+
+        HBox headerBox = new HBox(20);
+        headerBox.setPadding(new Insets(25));
+        headerBox.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); " +
+                "-fx-border-color: #f39c12; -fx-border-width: 0 0 2 0;");
+        headerBox.setAlignment(Pos.CENTER_LEFT);
+
+        Label welcomeLabel = new Label("📋 TELLER PANEL - " + currentUser.getUsername().toUpperCase());
+        welcomeLabel.setStyle("-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #f39c12;");
+
+        HBox spacer = new HBox();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button logoutButton = new Button("LOGOUT");
+        logoutButton.setPrefWidth(120);
+        logoutButton.setPrefHeight(40);
+        logoutButton.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); " +
+                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
+        logoutButton.setOnAction(e -> {
+            currentUser = null;
+            showLoginScreen();
+        });
+
+        headerBox.getChildren().addAll(welcomeLabel, spacer, logoutButton);
+
+        VBox contentPanel = new VBox(15);
+        contentPanel.setPadding(new Insets(30));
+        contentPanel.setStyle("-fx-background-color: #0a0e27;");
+
+        Label titleLabel = new Label("TELLER OPERATIONS");
+        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #f39c12; -fx-letter-spacing: 2;");
+
+        HBox buttonRowBox = new HBox(15);
+        buttonRowBox.setAlignment(Pos.CENTER_LEFT);
+
+    Button processTransactionButton = new Button("💳 PROCESS TRANSACTION");
+        processTransactionButton.setPrefWidth(180);
+        processTransactionButton.setPrefHeight(50);
+        processTransactionButton.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); " +
+                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
+    processTransactionButton.setOnAction(e -> showProcessTransactionScreen());
+
+    Button openAccountButton = new Button("➕ OPEN NEW ACCOUNT");
+        openAccountButton.setPrefWidth(180);
+        openAccountButton.setPrefHeight(50);
+        openAccountButton.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); " +
+                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
+    openAccountButton.setOnAction(e -> showOpenAccountScreen());
+
+    Button verifyCustomerButton = new Button("🔍 VERIFY CUSTOMER");
+        verifyCustomerButton.setPrefWidth(180);
+        verifyCustomerButton.setPrefHeight(50);
+        verifyCustomerButton.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); " +
+                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
+    verifyCustomerButton.setOnAction(e -> showVerifyCustomerScreen());
+
+        buttonRowBox.getChildren().addAll(processTransactionButton, openAccountButton, verifyCustomerButton);
+        contentPanel.getChildren().addAll(titleLabel, buttonRowBox);
+
+        mainContainer.getChildren().addAll(headerBox, contentPanel);
+
+        Scene scene = new Scene(mainContainer, 900, 400);
+        primaryStage.setTitle("Meridian Bank - Teller Dashboard");
+        primaryStage.setScene(scene);
+    }
+
+    private void showViewAllUsersScreen() {
+        VBox mainContainer = new VBox(15);
+        mainContainer.setPadding(new Insets(0));
+        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+
+        HBox headerBox = new HBox(20);
+        headerBox.setPadding(new Insets(25));
+        headerBox.setStyle("-fx-background-color: linear-gradient(to right, #c0392b, #8b0000); " +
+                "-fx-border-color: #e74c3c; -fx-border-width: 0 0 2 0;");
+        headerBox.setAlignment(Pos.CENTER_LEFT);
+
+        Label titleLabel = new Label("👥 ALL REGISTERED USERS");
+        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #e74c3c;");
+
+        HBox spacer = new HBox();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button backButton = new Button("← BACK");
+        backButton.setPrefWidth(100);
+        backButton.setPrefHeight(40);
+        backButton.setStyle("-fx-background-color: linear-gradient(to right, #e74c3c, #c0392b); " +
+                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
+        backButton.setOnAction(e -> showAdminDashboard());
+
+        headerBox.getChildren().addAll(titleLabel, spacer, backButton);
+
+        VBox contentPanel = new VBox(15);
+        contentPanel.setPadding(new Insets(20));
+        contentPanel.setStyle("-fx-background-color: #0a0e27;");
+
+        TableView<Customer> usersTable = new TableView<>();
+        usersTable.setStyle("-fx-background-color: #0f1433; -fx-control-inner-background: #0f1433; " +
+                "-fx-text-fill: #e0e0e0; -fx-border-color: #e74c3c; -fx-border-width: 1;");
+
+        TableColumn<Customer, String> nameColumn = new TableColumn<>("Name");
+        nameColumn.setPrefWidth(150);
+        nameColumn.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getFirstName() + " " + cellData.getValue().getSurname()));
+
+        TableColumn<Customer, String> emailColumn = new TableColumn<>("Email");
+        emailColumn.setPrefWidth(200);
+        emailColumn.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getEmail()));
+
+        TableColumn<Customer, String> phoneColumn = new TableColumn<>("Phone");
+        phoneColumn.setPrefWidth(120);
+        phoneColumn.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getPhoneNumber()));
+
+        TableColumn<Customer, String> addressColumn = new TableColumn<>("Address");
+        addressColumn.setPrefWidth(200);
+        addressColumn.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getAddress()));
+
+        TableColumn<Customer, String> roleColumn = new TableColumn<>("Role");
+        roleColumn.setPrefWidth(100);
+        roleColumn.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getRole() != null ? cellData.getValue().getRole().getDisplayName() : "N/A"));
+
+        usersTable.getColumns().addAll(nameColumn, emailColumn, phoneColumn, addressColumn, roleColumn);
+
+        List<Customer> allCustomers = bank.getAllCustomers();
+        usersTable.getItems().addAll(allCustomers);
+
+        Label countLabel = new Label("Total Users: " + allCustomers.size());
+        countLabel.setStyle("-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #e74c3c;");
+
+        contentPanel.getChildren().addAll(countLabel, usersTable);
+        VBox.setVgrow(usersTable, Priority.ALWAYS);
+
+        mainContainer.getChildren().addAll(headerBox, contentPanel);
+
+        Scene scene = new Scene(mainContainer, 1000, 600);
+        primaryStage.setTitle("Meridian Bank - View All Users");
+        primaryStage.setScene(scene);
+    }
+
+    private void showProcessTransactionScreen() {
+        VBox mainContainer = new VBox(15);
+        mainContainer.setPadding(new Insets(0));
+        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+
+        HBox headerBox = new HBox(20);
+        headerBox.setPadding(new Insets(25));
+        headerBox.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); " +
+                "-fx-border-color: #f39c12; -fx-border-width: 0 0 2 0;");
+        headerBox.setAlignment(Pos.CENTER_LEFT);
+
+        Label titleLabel = new Label("💳 PROCESS TRANSACTION");
+        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #f39c12;");
+
+        HBox spacer = new HBox();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button backButton = new Button("← BACK");
+        backButton.setPrefWidth(100);
+        backButton.setPrefHeight(40);
+        backButton.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); " +
+                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
+        backButton.setOnAction(e -> showTellerDashboard());
+
+        headerBox.getChildren().addAll(titleLabel, spacer, backButton);
+
+        VBox contentPanel = new VBox(12);
+        contentPanel.setPadding(new Insets(20));
+        contentPanel.setStyle("-fx-background-color: #0a0e27;");
+
+        // Customer selector
+        ComboBox<Customer> customerCombo = new ComboBox<>();
+        customerCombo.getItems().addAll(bank.getAllCustomers());
+        customerCombo.setPromptText("Select Customer");
+        customerCombo.setConverter(new javafx.util.StringConverter<Customer>(){
+            @Override public String toString(Customer c) { return c == null ? "" : c.getFirstName() + " " + c.getSurname() + " (" + c.getEmail() + ")"; }
+            @Override public Customer fromString(String string) { return null; }
+        });
+
+        // Account selector
+        ComboBox<Account> accountCombo = new ComboBox<>();
+        accountCombo.setPromptText("Select Account");
+        accountCombo.setConverter(new javafx.util.StringConverter<Account>(){
+            @Override public String toString(Account a) { return a == null ? "" : a.getAccountId() + " - BWP " + String.format("%.2f", a.getBalance()); }
+            @Override public Account fromString(String string) { return null; }
+        });
+
+        // Operation selector
+        ComboBox<String> opCombo = new ComboBox<>();
+        opCombo.getItems().addAll("Deposit", "Withdraw", "Transfer");
+        opCombo.setValue("Deposit");
+
+        TextField amountField = new TextField();
+        amountField.setPromptText("Amount (BWP)");
+
+        ComboBox<Account> targetAccountCombo = new ComboBox<>();
+        targetAccountCombo.setPromptText("Target Account (for Transfer)");
+        targetAccountCombo.setConverter(new javafx.util.StringConverter<Account>(){
+            @Override public String toString(Account a) { return a == null ? "" : a.getAccountId() + " - BWP " + String.format("%.2f", a.getBalance()); }
+            @Override public Account fromString(String string) { return null; }
+        });
+        targetAccountCombo.setVisible(false);
+
+        customerCombo.setOnAction(e -> {
+            Customer sel = customerCombo.getValue();
+            accountCombo.getItems().clear();
+            if (sel != null) accountCombo.getItems().addAll(accountController.getCustomerAccounts(sel));
+            targetAccountCombo.getItems().clear();
+            targetAccountCombo.getItems().addAll(bank.getAllAccounts());
+        });
+
+        opCombo.setOnAction(e -> {
+            String op = opCombo.getValue();
+            targetAccountCombo.setVisible("Transfer".equals(op));
+        });
+
+        Button submitBtn = new Button("Submit");
+        submitBtn.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); -fx-text-fill: white; -fx-font-weight: bold;");
+        submitBtn.setOnAction(e -> {
+            Customer cust = customerCombo.getValue();
+            Account acc = accountCombo.getValue();
+            String op = opCombo.getValue();
+            double amt = 0;
+            try { amt = Double.parseDouble(amountField.getText()); } catch (Exception ex) { showAlert("Error", "Invalid amount", "Please enter a valid numeric amount", false); return; }
+            if (cust == null || acc == null) { showAlert("Error", "Missing selection", "Select a customer and account", false); return; }
+            if (amt <= 0) { showAlert("Error", "Invalid amount", "Amount must be greater than zero", false); return; }
+
+            boolean success = false;
+            if ("Deposit".equals(op)) {
+                success = acc.deposit(amt);
+            } else if ("Withdraw".equals(op)) {
+                success = acc.withdraw(amt);
+            } else if ("Transfer".equals(op)) {
+                Account target = targetAccountCombo.getValue();
+                if (target == null) { showAlert("Error", "Missing target", "Select a target account for transfer", false); return; }
+                success = accountController.transferFunds(acc.getAccountId(), target.getAccountId(), amt, "Teller transfer");
+            }
+
+            if (success) {
+                showAlert("Success", "Transaction Completed", "Operation successful", true);
+            } else {
+                showAlert("Failure", "Transaction Failed", "Operation could not be completed", false);
+            }
+        });
+
+        contentPanel.getChildren().addAll(titleLabel, customerCombo, accountCombo, opCombo, amountField, targetAccountCombo, submitBtn);
+        mainContainer.getChildren().addAll(headerBox, contentPanel);
+
+        Scene scene = new Scene(mainContainer, 900, 500);
+        primaryStage.setTitle("Meridian Bank - Process Transaction");
+        primaryStage.setScene(scene);
+    }
+
+    private void showOpenAccountScreen() {
+        VBox mainContainer = new VBox(12);
+        mainContainer.setPadding(new Insets(0));
+        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+
+        HBox headerBox = new HBox(20);
+        headerBox.setPadding(new Insets(25));
+        headerBox.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); " +
+                "-fx-border-color: #f39c12; -fx-border-width: 0 0 2 0;");
+        headerBox.setAlignment(Pos.CENTER_LEFT);
+
+        Label titleLabel = new Label("➕ OPEN NEW ACCOUNT");
+        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #f39c12;");
+
+        HBox spacer = new HBox();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button backButton = new Button("← BACK");
+        backButton.setPrefWidth(100);
+        backButton.setPrefHeight(40);
+        backButton.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); " +
+                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
+        backButton.setOnAction(e -> showTellerDashboard());
+
+        headerBox.getChildren().addAll(titleLabel, spacer, backButton);
+
+        VBox contentPanel = new VBox(10);
+        contentPanel.setPadding(new Insets(20));
+        contentPanel.setStyle("-fx-background-color: #0a0e27;");
+
+        ComboBox<Customer> customerCombo = new ComboBox<>();
+        customerCombo.getItems().addAll(bank.getAllCustomers());
+        customerCombo.setPromptText("Select Customer");
+        customerCombo.setConverter(new javafx.util.StringConverter<Customer>(){
+            @Override public String toString(Customer c) { return c == null ? "" : c.getFirstName() + " " + c.getSurname() + " (" + c.getEmail() + ")"; }
+            @Override public Customer fromString(String string) { return null; }
+        });
+
+        ComboBox<String> typeCombo = new ComboBox<>();
+        typeCombo.getItems().addAll("Savings", "Investment", "Cheque");
+        typeCombo.setValue("Savings");
+
+        TextField initialDepositField = new TextField();
+        initialDepositField.setPromptText("Initial deposit (for Investment)");
+        initialDepositField.setVisible(false);
+
+        TextField employerField = new TextField();
+        employerField.setPromptText("Employer Name (for Cheque)");
+        employerField.setVisible(false);
+
+        TextField employerAddressField = new TextField();
+        employerAddressField.setPromptText("Employer Address (for Cheque)");
+        employerAddressField.setVisible(false);
+
+        typeCombo.setOnAction(e -> {
+            String t = typeCombo.getValue();
+            initialDepositField.setVisible("Investment".equals(t));
+            employerField.setVisible("Cheque".equals(t));
+            employerAddressField.setVisible("Cheque".equals(t));
+        });
+
+        Button createBtn = new Button("Create Account");
+        createBtn.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); -fx-text-fill: white; -fx-font-weight: bold;");
+        createBtn.setOnAction(e -> {
+            Customer c = customerCombo.getValue();
+            if (c == null) { showAlert("Error", "No customer", "Select a customer", false); return; }
+            String t = typeCombo.getValue();
+            boolean ok = false;
+            if ("Savings".equals(t)) {
+                ok = accountController.openSavingsAccount(c) != null;
+            } else if ("Investment".equals(t)) {
+                double amt = 0;
+                try { amt = Double.parseDouble(initialDepositField.getText()); } catch (Exception ex) { showAlert("Error", "Invalid deposit", "Enter numeric initial deposit", false); return; }
+                ok = accountController.openInvestmentAccount(c, amt) != null;
+            } else if ("Cheque".equals(t)) {
+                String em = employerField.getText();
+                String emAddr = employerAddressField.getText();
+                if (em == null || em.isEmpty() || emAddr == null || emAddr.isEmpty()) { showAlert("Error", "Employer info", "Provide employer name and address", false); return; }
+                ok = accountController.openChequeAccount(c, em, emAddr) != null;
+            }
+            if (ok) showAlert("Success", "Account Created", "New account created successfully", true);
+            else showAlert("Failure", "Could not create account", "Check input or constraints", false);
+        });
+
+        contentPanel.getChildren().addAll(titleLabel, customerCombo, typeCombo, initialDepositField, employerField, employerAddressField, createBtn);
+        mainContainer.getChildren().addAll(headerBox, contentPanel);
+
+        Scene scene = new Scene(mainContainer, 900, 500);
+        primaryStage.setTitle("Meridian Bank - Open Account");
+        primaryStage.setScene(scene);
+    }
+
+    private void showVerifyCustomerScreen() {
+        VBox mainContainer = new VBox(12);
+        mainContainer.setPadding(new Insets(0));
+        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+
+        HBox headerBox = new HBox(20);
+        headerBox.setPadding(new Insets(25));
+        headerBox.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); " +
+                "-fx-border-color: #f39c12; -fx-border-width: 0 0 2 0;");
+        headerBox.setAlignment(Pos.CENTER_LEFT);
+
+        Label titleLabel = new Label("🔍 VERIFY CUSTOMER");
+        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #f39c12;");
+
+        HBox spacer = new HBox();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button backButton = new Button("← BACK");
+        backButton.setPrefWidth(100);
+        backButton.setPrefHeight(40);
+        backButton.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); " +
+                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
+        backButton.setOnAction(e -> showTellerDashboard());
+
+        headerBox.getChildren().addAll(titleLabel, spacer, backButton);
+
+        VBox contentPanel = new VBox(10);
+        contentPanel.setPadding(new Insets(20));
+        contentPanel.setStyle("-fx-background-color: #0a0e27;");
+
+        TextField emailField = new TextField();
+        emailField.setPromptText("Search by email");
+
+        TextField idField = new TextField();
+        idField.setPromptText("Or search by Customer ID");
+
+        Button searchBtn = new Button("Search");
+        searchBtn.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); -fx-text-fill: white; -fx-font-weight: bold;");
+
+        Label resultLabel = new Label();
+        resultLabel.setStyle("-fx-text-fill: #e0e0e0; -fx-font-size: 12;");
+
+        ListView<String> accountsList = new ListView<>();
+        accountsList.setPrefHeight(150);
+
+        searchBtn.setOnAction(e -> {
+            String email = emailField.getText();
+            String cid = idField.getText();
+            Customer found = null;
+            if (email != null && !email.isEmpty()) found = bank.getCustomerByEmail(email);
+            if (found == null && cid != null && !cid.isEmpty()) found = bank.getCustomerById(cid);
+            if (found == null) { resultLabel.setText("No customer found"); accountsList.getItems().clear(); return; }
+            resultLabel.setText("Customer: " + found.getFirstName() + " " + found.getSurname() + " | Email: " + found.getEmail() + " | Phone: " + found.getPhoneNumber());
+            accountsList.getItems().clear();
+            for (Account a : found.getAccounts()) {
+                accountsList.getItems().add(a.getAccountId() + " | " + a.getAccountType() + " | BWP " + String.format("%.2f", a.getBalance()));
+            }
+        });
+
+        contentPanel.getChildren().addAll(titleLabel, emailField, idField, searchBtn, resultLabel, accountsList);
+        mainContainer.getChildren().addAll(headerBox, contentPanel);
+
+        Scene scene = new Scene(mainContainer, 900, 500);
+        primaryStage.setTitle("Meridian Bank - Verify Customer");
+        primaryStage.setScene(scene);
+    }
+
+    private void showManageAccountsScreen() {
+        VBox mainContainer = new VBox(15);
+        mainContainer.setPadding(new Insets(0));
+        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+
+        HBox headerBox = new HBox(20);
+        headerBox.setPadding(new Insets(25));
+        headerBox.setStyle("-fx-background-color: linear-gradient(to right, #c0392b, #8b0000); " +
+                "-fx-border-color: #e74c3c; -fx-border-width: 0 0 2 0;");
+        headerBox.setAlignment(Pos.CENTER_LEFT);
+
+        Label titleLabel = new Label("💼 MANAGE ACCOUNTS");
+        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #e74c3c;");
+
+        HBox spacer = new HBox();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button backButton = new Button("← BACK");
+        backButton.setPrefWidth(100);
+        backButton.setPrefHeight(40);
+        backButton.setStyle("-fx-background-color: linear-gradient(to right, #e74c3c, #c0392b); " +
+                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
+        backButton.setOnAction(e -> showAdminDashboard());
+
+        headerBox.getChildren().addAll(titleLabel, spacer, backButton);
+
+        VBox contentPanel = new VBox(15);
+        contentPanel.setPadding(new Insets(20));
+        contentPanel.setStyle("-fx-background-color: #0a0e27;");
+
+        TableView<Account> accountsTable = new TableView<>();
+        accountsTable.setStyle("-fx-background-color: #0f1433; -fx-control-inner-background: #0f1433; " +
+                "-fx-text-fill: #e0e0e0; -fx-border-color: #e74c3c; -fx-border-width: 1;");
+
+        TableColumn<Account, String> accountNumColumn = new TableColumn<>("Account Number");
+        accountNumColumn.setPrefWidth(150);
+        accountNumColumn.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getAccountNumber()));
+
+        TableColumn<Account, String> typeColumn = new TableColumn<>("Account Type");
+        typeColumn.setPrefWidth(130);
+        typeColumn.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getAccountType()));
+
+        TableColumn<Account, String> balanceColumn = new TableColumn<>("Balance (BWP)");
+        balanceColumn.setPrefWidth(120);
+        balanceColumn.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(String.format("%.2f", cellData.getValue().getBalance())));
+
+        TableColumn<Account, String> statusColumn = new TableColumn<>("Status");
+        statusColumn.setPrefWidth(100);
+        statusColumn.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().isActive() ? "🟢 ACTIVE" : "🔴 INACTIVE"));
+
+        TableColumn<Account, String> createdColumn = new TableColumn<>("Created");
+        createdColumn.setPrefWidth(120);
+        createdColumn.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getDateOpened().toString()));
+
+        accountsTable.getColumns().addAll(accountNumColumn, typeColumn, balanceColumn, statusColumn, createdColumn);
+
+        List<Account> allAccounts = bank.getAllAccounts();
+        accountsTable.getItems().addAll(allAccounts);
+
+        double totalBalance = allAccounts.stream().mapToDouble(Account::getBalance).sum();
+        long activeAccounts = allAccounts.stream().filter(Account::isActive).count();
+
+        HBox statsBox = new HBox(30);
+        statsBox.setPadding(new Insets(15));
+        statsBox.setStyle("-fx-background-color: #0f1433; -fx-border-color: #e74c3c; -fx-border-width: 1; -fx-border-radius: 4;");
+
+        Label totalAccountsLabel = new Label("Total Accounts: " + allAccounts.size());
+        totalAccountsLabel.setStyle("-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: #e74c3c;");
+
+        Label activeAccountsLabel = new Label("Active Accounts: " + activeAccounts);
+        activeAccountsLabel.setStyle("-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: #1abc9c;");
+
+        Label totalBalanceLabel = new Label("Total Balance: BWP " + String.format("%.2f", totalBalance));
+        totalBalanceLabel.setStyle("-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: #f39c12;");
+
+        statsBox.getChildren().addAll(totalAccountsLabel, activeAccountsLabel, totalBalanceLabel);
+
+        contentPanel.getChildren().addAll(statsBox, accountsTable);
+        VBox.setVgrow(accountsTable, Priority.ALWAYS);
+
+        mainContainer.getChildren().addAll(headerBox, contentPanel);
+
+        Scene scene = new Scene(mainContainer, 1000, 600);
+        primaryStage.setTitle("Meridian Bank - Manage Accounts");
+        primaryStage.setScene(scene);
+    }
+
+    private void showSystemStatisticsScreen() {
+        VBox mainContainer = new VBox(15);
+        mainContainer.setPadding(new Insets(0));
+        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+
+        HBox headerBox = new HBox(20);
+        headerBox.setPadding(new Insets(25));
+        headerBox.setStyle("-fx-background-color: linear-gradient(to right, #c0392b, #8b0000); " +
+                "-fx-border-color: #e74c3c; -fx-border-width: 0 0 2 0;");
+        headerBox.setAlignment(Pos.CENTER_LEFT);
+
+        Label titleLabel = new Label("📊 SYSTEM STATISTICS");
+        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #e74c3c;");
+
+        HBox spacer = new HBox();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button backButton = new Button("← BACK");
+        backButton.setPrefWidth(100);
+        backButton.setPrefHeight(40);
+        backButton.setStyle("-fx-background-color: linear-gradient(to right, #e74c3c, #c0392b); " +
+                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
+        backButton.setOnAction(e -> showAdminDashboard());
+
+        headerBox.getChildren().addAll(titleLabel, spacer, backButton);
+
+        VBox contentPanel = new VBox(20);
+        contentPanel.setPadding(new Insets(30));
+        contentPanel.setStyle("-fx-background-color: #0a0e27;");
+
+        List<Customer> allCustomers = bank.getAllCustomers();
+        List<Account> allAccounts = bank.getAllAccounts();
+
+        double totalBalance = allAccounts.stream().mapToDouble(Account::getBalance).sum();
+        long activeAccounts = allAccounts.stream().filter(Account::isActive).count();
+        long customerCount = allCustomers.size();
+
+        // Create statistics cards
+        VBox statsContainer = new VBox(15);
+
+        HBox row1 = new HBox(20);
+        row1.setAlignment(Pos.CENTER_LEFT);
+
+        VBox card1 = createStatCard("👥 TOTAL CUSTOMERS", String.valueOf(customerCount), "#1abc9c");
+        VBox card2 = createStatCard("💼 TOTAL ACCOUNTS", String.valueOf(allAccounts.size()), "#f39c12");
+        VBox card3 = createStatCard("🟢 ACTIVE ACCOUNTS", String.valueOf(activeAccounts), "#27ae60");
+
+        row1.getChildren().addAll(card1, card2, card3);
+
+        HBox row2 = new HBox(20);
+        row2.setAlignment(Pos.CENTER_LEFT);
+
+        VBox card4 = createStatCard("💰 TOTAL BALANCE", "BWP " + String.format("%.2f", totalBalance), "#e74c3c");
+        VBox card5 = createStatCard("📝 SYSTEM DATA", String.valueOf(allAccounts.size()), "#9b59b6");
+        VBox card6 = createStatCard("⚙️ SYSTEM STATUS", "🟢 OPERATIONAL", "#1abc9c");
+
+        row2.getChildren().addAll(card4, card5, card6);
+
+        statsContainer.getChildren().addAll(row1, row2);
+
+        // Account Type Breakdown
+        VBox breakdownBox = new VBox(10);
+        breakdownBox.setPadding(new Insets(20));
+        breakdownBox.setStyle("-fx-background-color: #0f1433; -fx-border-color: #e74c3c; -fx-border-width: 1; -fx-border-radius: 4;");
+
+        Label breakdownTitle = new Label("📈 ACCOUNT TYPE BREAKDOWN");
+        breakdownTitle.setStyle("-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #e74c3c;");
+
+        long savingsCount = allAccounts.stream().filter(a -> a.getAccountType().equals("Savings Account")).count();
+        long investmentCount = allAccounts.stream().filter(a -> a.getAccountType().equals("Investment Account")).count();
+        long chequeCount = allAccounts.stream().filter(a -> a.getAccountType().equals("Cheque Account")).count();
+
+        double savingsBalance = allAccounts.stream()
+                .filter(a -> a.getAccountType().equals("Savings Account"))
+                .mapToDouble(Account::getBalance).sum();
+        double investmentBalance = allAccounts.stream()
+                .filter(a -> a.getAccountType().equals("Investment Account"))
+                .mapToDouble(Account::getBalance).sum();
+        double chequeBalance = allAccounts.stream()
+                .filter(a -> a.getAccountType().equals("Cheque Account"))
+                .mapToDouble(Account::getBalance).sum();
+
+        Label savingsLabel = new Label("💾 Savings Accounts: " + savingsCount + " accounts | Balance: BWP " + String.format("%.2f", savingsBalance));
+        savingsLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #1abc9c; -fx-padding: 8;");
+
+        Label investmentLabel = new Label("📊 Investment Accounts: " + investmentCount + " accounts | Balance: BWP " + String.format("%.2f", investmentBalance));
+        investmentLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #f39c12; -fx-padding: 8;");
+
+        Label chequeLabel = new Label("✓ Cheque Accounts: " + chequeCount + " accounts | Balance: BWP " + String.format("%.2f", chequeBalance));
+        chequeLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #27ae60; -fx-padding: 8;");
+
+        breakdownBox.getChildren().addAll(breakdownTitle, savingsLabel, investmentLabel, chequeLabel);
+
+        contentPanel.getChildren().addAll(statsContainer, breakdownBox);
+
+        ScrollPane scrollPane = new ScrollPane(contentPanel);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background-color: #0a0e27; -fx-control-inner-background: #0a0e27;");
+
+        mainContainer.getChildren().addAll(headerBox, scrollPane);
+
+        Scene scene = new Scene(mainContainer, 1000, 700);
+        primaryStage.setTitle("Meridian Bank - System Statistics");
+        primaryStage.setScene(scene);
+    }
+
+    private VBox createStatCard(String title, String value, String color) {
+        VBox card = new VBox(10);
+        card.setPadding(new Insets(20));
+        card.setStyle("-fx-background-color: #0f1433; -fx-border-color: " + color + "; " +
+                "-fx-border-width: 2; -fx-border-radius: 6;");
+        card.setPrefWidth(200);
+        card.setPrefHeight(120);
+        card.setAlignment(Pos.CENTER);
+
+        Label titleLabel = new Label(title);
+        titleLabel.setStyle("-fx-font-size: 12; -fx-text-fill: " + color + "; -fx-font-weight: bold;");
+
+        Label valueLabel = new Label(value);
+        valueLabel.setStyle("-fx-font-size: 24; -fx-text-fill: " + color + "; -fx-font-weight: bold;");
+
+        card.getChildren().addAll(titleLabel, valueLabel);
+        return card;
+    }
+
+    private void showCustomerDashboard() {
         VBox mainContainer = new VBox(15);
         mainContainer.setPadding(new Insets(0));
         mainContainer.setStyle("-fx-background-color: #0a0e27;");
