@@ -62,7 +62,8 @@ public class AccountDAO {
 
             if (rs.next()) {
                 String accountType = rs.getString("ACCOUNT_TYPE");
-                Customer customer = new CustomerDAO().read(rs.getString("CUSTOMER_ID"));
+                // use a shallow customer load to avoid recursive account<->customer loading
+                Customer customer = new CustomerDAO().readShallow(rs.getString("CUSTOMER_ID"));
                 Account account = null;
 
                 if ("Savings Account".equals(accountType)) {
@@ -87,28 +88,67 @@ public class AccountDAO {
     // READ ALL BY CUSTOMER
     public List<Account> readByCustomer(String customerId) {
         List<Account> accounts = new ArrayList<>();
-        String sql = "SELECT * FROM ACCOUNT WHERE CUSTOMER_ID = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setString(1, customerId);
-            ResultSet rs = pstmt.executeQuery();
-            Customer customer = new CustomerDAO().read(customerId);
+        String sql;
+        
+        // Special case: "*" means get all accounts
+        if ("*".equals(customerId)) {
+            sql = "SELECT * FROM ACCOUNT";
+        } else {
+            sql = "SELECT * FROM ACCOUNT WHERE CUSTOMER_ID = ?";
+        }
+        
+        try {
+            if ("*".equals(customerId)) {
+                var stmt = connection.createStatement();
+                ResultSet rs = stmt.executeQuery(sql);
+                
+                while (rs.next()) {
+                    String accountNumber = rs.getString("ACCOUNT_NUMBER");
+                    String accountType = rs.getString("ACCOUNT_TYPE");
+                    String custId = rs.getString("CUSTOMER_ID");
+                    // use a shallow customer load to avoid recursive account<->customer loading
+                    Customer customer = new CustomerDAO().readShallow(custId);
+                    Account account = null;
 
-            while (rs.next()) {
-                String accountNumber = rs.getString("ACCOUNT_NUMBER");
-                String accountType = rs.getString("ACCOUNT_TYPE");
-                Account account = null;
+                    if ("Savings Account".equals(accountType)) {
+                        account = new SavingsAccount(accountNumber, customer);
+                    } else if ("Investment Account".equals(accountType)) {
+                        account = new InvestmentAccount(accountNumber, customer);
+                    } else if ("Cheque Account".equals(accountType)) {
+                        account = new ChequeAccount(accountNumber, customer, "", "");
+                    }
 
-                if ("Savings Account".equals(accountType)) {
-                    account = new SavingsAccount(accountNumber, customer);
-                } else if ("Investment Account".equals(accountType)) {
-                    account = new InvestmentAccount(accountNumber, customer);
-                } else if ("Cheque Account".equals(accountType)) {
-                    account = new ChequeAccount(accountNumber, customer, "", "");
+                    if (account != null) {
+                        account.setBalance(rs.getDouble("BALANCE"));
+                        accounts.add(account);
+                    }
                 }
+                stmt.close();
+            } else {
+                try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                    pstmt.setString(1, customerId);
+                    ResultSet rs = pstmt.executeQuery();
+                    // load a shallow customer (avoid recursive loading of accounts)
+                    Customer customer = new CustomerDAO().readShallow(customerId);
 
-                if (account != null) {
-                    account.setBalance(rs.getDouble("BALANCE"));
-                    accounts.add(account);
+                    while (rs.next()) {
+                        String accountNumber = rs.getString("ACCOUNT_NUMBER");
+                        String accountType = rs.getString("ACCOUNT_TYPE");
+                        Account account = null;
+
+                        if ("Savings Account".equals(accountType)) {
+                            account = new SavingsAccount(accountNumber, customer);
+                        } else if ("Investment Account".equals(accountType)) {
+                            account = new InvestmentAccount(accountNumber, customer);
+                        } else if ("Cheque Account".equals(accountType)) {
+                            account = new ChequeAccount(accountNumber, customer, "", "");
+                        }
+
+                        if (account != null) {
+                            account.setBalance(rs.getDouble("BALANCE"));
+                            accounts.add(account);
+                        }
+                    }
                 }
             }
         } catch (SQLException e) {

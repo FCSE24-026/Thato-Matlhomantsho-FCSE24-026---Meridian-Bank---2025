@@ -10,10 +10,13 @@ C:\Users\matlh\OneDrive\Documents\GitHub\Thato-Matlhomantsho-FCSE24-026---Meridi
 C:\Users\matlh\OneDrive\Documents\GitHub\Thato-Matlhomantsho-FCSE24-026---Meridian-Bank---2025\src\main\java\com\banking\main\Role.java
 C:\Users\matlh\OneDrive\Documents\GitHub\Thato-Matlhomantsho-FCSE24-026---Meridian-Bank---2025\src\main\java\com\banking\controller\LoginController.java
 C:\Users\matlh\OneDrive\Documents\GitHub\Thato-Matlhomantsho-FCSE24-026---Meridian-Bank---2025\src\main\java\com\banking\util\Constants.java
+C:\Users\matlh\OneDrive\Documents\GitHub\Thato-Matlhomantsho-FCSE24-026---Meridian-Bank---2025\src\main\java\com\banking\main\DataPersistenceTest.java
 C:\Users\matlh\OneDrive\Documents\GitHub\Thato-Matlhomantsho-FCSE24-026---Meridian-Bank---2025\src\main\java\com\banking\view\AccountView.java
 C:\Users\matlh\OneDrive\Documents\GitHub\Thato-Matlhomantsho-FCSE24-026---Meridian-Bank---2025\src\main\java\com\banking\view\CustomerRegistrationView.java
+C:\Users\matlh\OneDrive\Documents\GitHub\Thato-Matlhomantsho-FCSE24-026---Meridian-Bank---2025\src\main\java\com\banking\model\CertificateOfDepositAccount.java
 C:\Users\matlh\OneDrive\Documents\GitHub\Thato-Matlhomantsho-FCSE24-026---Meridian-Bank---2025\src\main\java\com\banking\view\TransactionView.java
 C:\Users\matlh\OneDrive\Documents\GitHub\Thato-Matlhomantsho-FCSE24-026---Meridian-Bank---2025\src\main\java\com\banking\main\ModernBankingApp.java
+C:\Users\matlh\OneDrive\Documents\GitHub\Thato-Matlhomantsho-FCSE24-026---Meridian-Bank---2025\src\main\java\com\banking\main\RoleCheckMain.java
 C:\Users\matlh\OneDrive\Documents\GitHub\Thato-Matlhomantsho-FCSE24-026---Meridian-Bank---2025\src\main\java\com\banking\model\Transaction.java
 C:\Users\matlh\OneDrive\Documents\GitHub\Thato-Matlhomantsho-FCSE24-026---Meridian-Bank---2025\src\main\java\com\banking\persistence\DatabaseManager.java
 C:\Users\matlh\OneDrive\Documents\GitHub\Thato-Matlhomantsho-FCSE24-026---Meridian-Bank---2025\src\main\java\com\banking\view\LoginView.java
@@ -27,3 +30,5 @@ C:\Users\matlh\OneDrive\Documents\GitHub\Thato-Matlhomantsho-FCSE24-026---Meridi
 C:\Users\matlh\OneDrive\Documents\GitHub\Thato-Matlhomantsho-FCSE24-026---Meridian-Bank---2025\src\main\java\com\banking\util\PasswordUtil.java
 C:\Users\matlh\OneDrive\Documents\GitHub\Thato-Matlhomantsho-FCSE24-026---Meridian-Bank---2025\src\main\java\com\banking\model\Customer.java
 C:\Users\matlh\OneDrive\Documents\GitHub\Thato-Matlhomantsho-FCSE24-026---Meridian-Bank---2025\src\main\java\com\banking\controller\ApplicationController.java
+C:\Users\matlh\OneDrive\Documents\GitHub\Thato-Matlhomantsho-FCSE24-026---Meridian-Bank---2025\src\main\java\com\banking\model\AuditLog.java
+C:\Users\matlh\OneDrive\Documents\GitHub\Thato-Matlhomantsho-FCSE24-026---Meridian-Bank---2025\src\main\java\com\banking\model\MoneyMarketAccount.java

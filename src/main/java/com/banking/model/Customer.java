@@ -16,6 +16,8 @@ public class Customer implements Serializable {
     private String email;
     private LocalDate dateOfBirth;
     private Role role;
+    private boolean approved;
+    private boolean suspended;
     private List<Account> accounts;
     
     public Customer(String customerId, String firstName, String surname, String address,
@@ -28,6 +30,8 @@ public class Customer implements Serializable {
         this.email = email;
         this.dateOfBirth = LocalDate.now();
         this.role = role;
+        this.approved = true;
+        this.suspended = false;
         this.accounts = new ArrayList<>();
     }
     
@@ -35,6 +39,11 @@ public class Customer implements Serializable {
                    String phoneNumber, String email) {
         this(customerId, firstName, surname, address, phoneNumber, email, Role.CUSTOMER);
     }
+
+    public boolean isApproved() { return approved; }
+    public void setApproved(boolean approved) { this.approved = approved; }
+    public boolean isSuspended() { return suspended; }
+    public void setSuspended(boolean suspended) { this.suspended = suspended; }
     
     public void setAddress(String address) {
         this.address = address;
@@ -87,4 +96,5 @@ public class Customer implements Serializable {
     public void setEmail(String email) { this.email = email; }
     public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
     public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+    public void setRole(Role role) { this.role = role; }
 }

@@ -48,8 +48,42 @@ public class ModernBankingApp extends Application {
         authController.registerUser("Teller", "Smith", "teller@bank.com", "555-0002", "456 Teller Ave", Role.TELLER);
         authController.registerUser("John", "Doe", "john.doe@bank.com", "555-0003", "789 Customer Rd", Role.CUSTOMER);
         authController.registerUser("Jane", "Smith", "jane.smith@bank.com", "555-0004", "321 Client Lane", Role.CUSTOMER);
+        // Ensure seeded administrative users have correct roles (fix existing DB rows from older runs)
+        try {
+            com.banking.model.Customer admin = bank.getCustomerByEmail("admin@bank.com");
+            if (admin != null && admin.getRole() != Role.ADMIN) {
+                admin.setRole(Role.ADMIN);
+                admin.setApproved(true);
+                bank.updateCustomer(admin);
+                System.out.println("✓ Seed admin corrected to ADMIN role");
+            }
+            com.banking.model.Customer teller = bank.getCustomerByEmail("teller@bank.com");
+            if (teller != null && teller.getRole() != Role.TELLER) {
+                teller.setRole(Role.TELLER);
+                teller.setApproved(true);
+                bank.updateCustomer(teller);
+                System.out.println("✓ Seed teller corrected to TELLER role");
+            }
+        } catch (Exception ex) {
+            System.out.println("⚠ Seed role correction skipped: " + ex.getMessage());
+        }
         
-        System.out.println("✓ Seed data initialized with test users");
+        // Create default accounts for seeded customers
+        try {
+            com.banking.model.Customer john = bank.getCustomerByEmail("john.doe@bank.com");
+            com.banking.model.Customer jane = bank.getCustomerByEmail("jane.smith@bank.com");
+            if (john != null) {
+                accountController.openSavingsAccount(john);
+                accountController.openInvestmentAccount(john, 1000.0);
+            }
+            if (jane != null) {
+                accountController.openSavingsAccount(jane);
+            }
+        } catch (Exception ex) {
+            System.out.println("⚠ Seed account creation error: " + ex.getMessage());
+        }
+
+        System.out.println("✓ Seed data initialized with test users and sample accounts");
     }
 
     private void showLoginScreen() {
@@ -127,6 +161,7 @@ public class ModernBankingApp extends Application {
                         "-fx-background-color: rgba(243,156,18,0.1); -fx-border-radius: 4;");
             } else if (authController.authenticateUser(username, password)) {
                 currentUser = authController.getUserByUsername(username);
+                System.out.println("[UI] Logged in user: " + (currentUser != null ? currentUser.getUsername() + " role=" + currentUser.getRole() : "null"));
                 if (currentUser != null) {
                     showDashboard();
                 } else {
@@ -159,6 +194,18 @@ public class ModernBankingApp extends Application {
         primaryStage.setTitle("FLECA - Banking System");
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+
+    /**
+     * Require the current user to have a specific role. If not, show an alert and return false.
+     */
+    private boolean requireRole(Role required) {
+        if (currentUser == null || currentUser.getRole() == null || currentUser.getRole() != required) {
+            showAlert("Unauthorized", "Access denied", "You do not have permission to access this area", false);
+            showLoginScreen();
+            return false;
+        }
+        return true;
     }
 
     private void showRegisterScreen() {
@@ -270,6 +317,7 @@ public class ModernBankingApp extends Application {
     }
 
     private void showAdminDashboard() {
+        if (!requireRole(Role.ADMIN)) return;
         VBox mainContainer = new VBox(15);
         mainContainer.setPadding(new Insets(0));
         mainContainer.setStyle("-fx-background-color: #0a0e27;");
@@ -315,6 +363,13 @@ public class ModernBankingApp extends Application {
                 "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
         viewUsersButton.setOnAction(e -> showViewAllUsersScreen());
 
+        Button approveRegistrationsButton = new Button("✓ APPROVE REGISTRATIONS");
+        approveRegistrationsButton.setPrefWidth(180);
+        approveRegistrationsButton.setPrefHeight(50);
+        approveRegistrationsButton.setStyle("-fx-background-color: linear-gradient(to right, #27ae60, #1e8449); " +
+                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
+        approveRegistrationsButton.setOnAction(e -> showApproveRegistrationsScreen());
+
         Button manageAccountsButton = new Button("💼 MANAGE ACCOUNTS");
         manageAccountsButton.setPrefWidth(180);
         manageAccountsButton.setPrefHeight(50);
@@ -329,7 +384,7 @@ public class ModernBankingApp extends Application {
                 "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
         systemStatsButton.setOnAction(e -> showSystemStatisticsScreen());
 
-        buttonRowBox.getChildren().addAll(viewUsersButton, manageAccountsButton, systemStatsButton);
+        buttonRowBox.getChildren().addAll(viewUsersButton, approveRegistrationsButton, manageAccountsButton, systemStatsButton);
         contentPanel.getChildren().addAll(titleLabel, buttonRowBox);
 
         mainContainer.getChildren().addAll(headerBox, contentPanel);
@@ -340,6 +395,7 @@ public class ModernBankingApp extends Application {
     }
 
     private void showTellerDashboard() {
+        if (!requireRole(Role.TELLER)) return;
         VBox mainContainer = new VBox(15);
         mainContainer.setPadding(new Insets(0));
         mainContainer.setStyle("-fx-background-color: #0a0e27;");
@@ -486,7 +542,115 @@ public class ModernBankingApp extends Application {
         primaryStage.setScene(scene);
     }
 
+    private void showApproveRegistrationsScreen() {
+        if (!requireRole(Role.ADMIN)) return;
+        VBox mainContainer = new VBox(15);
+        mainContainer.setPadding(new Insets(0));
+        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+
+        HBox headerBox = new HBox(20);
+        headerBox.setPadding(new Insets(25));
+        headerBox.setStyle("-fx-background-color: linear-gradient(to right, #27ae60, #1e8449); " +
+                "-fx-border-color: #27ae60; -fx-border-width: 0 0 2 0;");
+        headerBox.setAlignment(Pos.CENTER_LEFT);
+
+        Label titleLabel = new Label("✓ APPROVE REGISTRATIONS");
+        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #27ae60;");
+
+        HBox spacer = new HBox();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button backButton = new Button("← BACK");
+        backButton.setPrefWidth(100);
+        backButton.setPrefHeight(40);
+        backButton.setStyle("-fx-background-color: linear-gradient(to right, #27ae60, #1e8449); " +
+                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
+        backButton.setOnAction(e -> showAdminDashboard());
+
+        headerBox.getChildren().addAll(titleLabel, spacer, backButton);
+
+        VBox contentPanel = new VBox(15);
+        contentPanel.setPadding(new Insets(20));
+        contentPanel.setStyle("-fx-background-color: #0a0e27;");
+
+        TableView<Customer> pendingTable = new TableView<>();
+        pendingTable.setStyle("-fx-background-color: #0f1433; -fx-control-inner-background: #0f1433; " +
+                "-fx-text-fill: #e0e0e0; -fx-border-color: #27ae60; -fx-border-width: 1;");
+
+        TableColumn<Customer, String> nameColumn = new TableColumn<>("Name");
+        nameColumn.setPrefWidth(150);
+        nameColumn.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getFirstName() + " " + cellData.getValue().getSurname()));
+
+        TableColumn<Customer, String> emailColumn = new TableColumn<>("Email");
+        emailColumn.setPrefWidth(200);
+        emailColumn.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getEmail()));
+
+        TableColumn<Customer, String> statusColumn = new TableColumn<>("Approval Status");
+        statusColumn.setPrefWidth(150);
+        statusColumn.setCellValueFactory(cellData -> 
+            new javafx.beans.property.SimpleStringProperty(cellData.getValue().isApproved() ? "✓ APPROVED" : "⏳ PENDING"));
+
+        TableColumn<Customer, Void> actionColumn = new TableColumn<>("Action");
+        actionColumn.setPrefWidth(100);
+        actionColumn.setCellFactory(param -> new TableCell<Customer, Void>() {
+            private final Button approveBtn = new Button("Approve");
+            {
+                approveBtn.setStyle("-fx-padding: 5; -fx-font-size: 11; -fx-background-color: #27ae60; " +
+                        "-fx-text-fill: white; -fx-border-radius: 3; -fx-cursor: hand;");
+                approveBtn.setOnAction(event -> {
+                    Customer customer = getTableView().getItems().get(getIndex());
+                    if (customer != null) {
+                        customer.setApproved(true);
+                        bank.addCustomer(customer); // Save the updated customer
+                        getTableView().refresh();
+                        showAlert("Success", "Approval Complete", 
+                            customer.getFirstName() + " has been approved", true);
+                    }
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getTableView().getItems().get(getIndex()).isApproved()) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(approveBtn);
+                }
+            }
+        });
+
+        pendingTable.getColumns().addAll(nameColumn, emailColumn, statusColumn, actionColumn);
+
+        // Filter to show customers (not admin/teller) who need approval
+        List<Customer> pendingApprovals = bank.getAllCustomers().stream()
+            .filter(c -> c.getRole() == Role.CUSTOMER && !c.isApproved())
+            .collect(java.util.stream.Collectors.toList());
+
+        pendingTable.getItems().addAll(pendingApprovals);
+
+        Label countLabel = new Label("Pending Approvals: " + pendingApprovals.size());
+        countLabel.setStyle("-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #27ae60;");
+
+        contentPanel.getChildren().addAll(countLabel, pendingTable);
+        VBox.setVgrow(pendingTable, Priority.ALWAYS);
+
+        mainContainer.getChildren().addAll(headerBox, contentPanel);
+
+        Scene scene = new Scene(mainContainer, 1000, 600);
+        primaryStage.setTitle("Meridian Bank - Approve Registrations");
+        primaryStage.setScene(scene);
+    }
+
     private void showProcessTransactionScreen() {
+        // allow tellers and admins to access this screen
+        if (currentUser == null || (currentUser.getRole() != Role.TELLER && currentUser.getRole() != Role.ADMIN)) {
+            showAlert("Unauthorized", "Access denied", "You do not have permission to access this area", false);
+            showDashboard();
+            return;
+        }
         VBox mainContainer = new VBox(15);
         mainContainer.setPadding(new Insets(0));
         mainContainer.setStyle("-fx-background-color: #0a0e27;");
@@ -600,6 +764,12 @@ public class ModernBankingApp extends Application {
     }
 
     private void showOpenAccountScreen() {
+        // tellers and admins can open accounts for customers via this screen
+        if (currentUser == null || (currentUser.getRole() != Role.TELLER && currentUser.getRole() != Role.ADMIN)) {
+            showAlert("Unauthorized", "Access denied", "You do not have permission to access this area", false);
+            showDashboard();
+            return;
+        }
         VBox mainContainer = new VBox(12);
         mainContainer.setPadding(new Insets(0));
         mainContainer.setStyle("-fx-background-color: #0a0e27;");
@@ -638,11 +808,11 @@ public class ModernBankingApp extends Application {
         });
 
         ComboBox<String> typeCombo = new ComboBox<>();
-        typeCombo.getItems().addAll("Savings", "Investment", "Cheque");
+        typeCombo.getItems().addAll("Savings", "Investment", "Cheque", "Money Market", "CD");
         typeCombo.setValue("Savings");
 
         TextField initialDepositField = new TextField();
-        initialDepositField.setPromptText("Initial deposit (for Investment)");
+        initialDepositField.setPromptText("Initial deposit (for Investment/Money Market/CD)");
         initialDepositField.setVisible(false);
 
         TextField employerField = new TextField();
@@ -653,11 +823,16 @@ public class ModernBankingApp extends Application {
         employerAddressField.setPromptText("Employer Address (for Cheque)");
         employerAddressField.setVisible(false);
 
+        TextField cdTermField = new TextField();
+        cdTermField.setPromptText("CD Term (months) [Default: 12]");
+        cdTermField.setVisible(false);
+
         typeCombo.setOnAction(e -> {
             String t = typeCombo.getValue();
-            initialDepositField.setVisible("Investment".equals(t));
+            initialDepositField.setVisible("Investment".equals(t) || "Money Market".equals(t) || "CD".equals(t));
             employerField.setVisible("Cheque".equals(t));
             employerAddressField.setVisible("Cheque".equals(t));
+            cdTermField.setVisible("CD".equals(t));
         });
 
         Button createBtn = new Button("Create Account");
@@ -678,12 +853,24 @@ public class ModernBankingApp extends Application {
                 String emAddr = employerAddressField.getText();
                 if (em == null || em.isEmpty() || emAddr == null || emAddr.isEmpty()) { showAlert("Error", "Employer info", "Provide employer name and address", false); return; }
                 ok = accountController.openChequeAccount(c, em, emAddr) != null;
+            } else if ("Money Market".equals(t)) {
+                double amt = 0;
+                try { amt = Double.parseDouble(initialDepositField.getText()); } catch (Exception ex) { showAlert("Error", "Invalid deposit", "Enter numeric initial deposit", false); return; }
+                ok = accountController.openMoneyMarketAccount(c, amt) != null;
+            } else if ("CD".equals(t)) {
+                double amt = 0;
+                int term = 12; // default
+                try { 
+                    amt = Double.parseDouble(initialDepositField.getText());
+                    try { term = Integer.parseInt(cdTermField.getText()); } catch (Exception ex) { }
+                } catch (Exception ex) { showAlert("Error", "Invalid deposit", "Enter numeric initial deposit", false); return; }
+                ok = accountController.openCertificateOfDepositAccount(c, amt, term) != null;
             }
             if (ok) showAlert("Success", "Account Created", "New account created successfully", true);
             else showAlert("Failure", "Could not create account", "Check input or constraints", false);
         });
 
-        contentPanel.getChildren().addAll(titleLabel, customerCombo, typeCombo, initialDepositField, employerField, employerAddressField, createBtn);
+        contentPanel.getChildren().addAll(titleLabel, customerCombo, typeCombo, initialDepositField, employerField, employerAddressField, cdTermField, createBtn);
         mainContainer.getChildren().addAll(headerBox, contentPanel);
 
         Scene scene = new Scene(mainContainer, 900, 500);
@@ -692,6 +879,7 @@ public class ModernBankingApp extends Application {
     }
 
     private void showVerifyCustomerScreen() {
+        if (!requireRole(Role.TELLER)) return;
         VBox mainContainer = new VBox(12);
         mainContainer.setPadding(new Insets(0));
         mainContainer.setStyle("-fx-background-color: #0a0e27;");
@@ -759,6 +947,7 @@ public class ModernBankingApp extends Application {
     }
 
     private void showManageAccountsScreen() {
+        if (!requireRole(Role.ADMIN)) return;
         VBox mainContainer = new VBox(15);
         mainContainer.setPadding(new Insets(0));
         mainContainer.setStyle("-fx-background-color: #0a0e27;");
@@ -851,6 +1040,7 @@ public class ModernBankingApp extends Application {
     }
 
     private void showSystemStatisticsScreen() {
+        if (!requireRole(Role.ADMIN)) return;
         VBox mainContainer = new VBox(15);
         mainContainer.setPadding(new Insets(0));
         mainContainer.setStyle("-fx-background-color: #0a0e27;");
@@ -976,6 +1166,7 @@ public class ModernBankingApp extends Application {
     }
 
     private void showCustomerDashboard() {
+        if (!requireRole(Role.CUSTOMER)) return;
         VBox mainContainer = new VBox(15);
         mainContainer.setPadding(new Insets(0));
         mainContainer.setStyle("-fx-background-color: #0a0e27;");
@@ -993,7 +1184,7 @@ public class ModernBankingApp extends Application {
         Label balanceLabel = new Label("ACCOUNT BALANCE");
         balanceLabel.setStyle("-fx-font-size: 10; -fx-text-fill: #888; -fx-letter-spacing: 1;");
 
-        double totalBalance = accountController.getTotalBalance(currentUser.getUserId());
+    double totalBalance = accountController.getTotalBalance(currentUser.getUserId());
         Label amountLabel = new Label("$" + String.format("%.2f", totalBalance));
         amountLabel.setStyle("-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #1abc9c;");
 
@@ -1066,7 +1257,7 @@ public class ModernBankingApp extends Application {
         titleLabel.setStyle("-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #00d4ff; -fx-letter-spacing: 1;");
 
         VBox accountsBox = new VBox(15);
-        List<Account> accounts = accountController.getUserAccounts(currentUser.getUserId());
+    List<Account> accounts = accountController.getUserAccounts(currentUser.getUserId());
 
         if (accounts.isEmpty()) {
             Label emptyLabel = new Label("✗ No accounts found. Create one!");
@@ -1139,7 +1330,7 @@ public class ModernBankingApp extends Application {
                 "-fx-border-width: 1; -fx-border-radius: 8; -fx-padding: 30; " +
                 "-fx-effect: dropshadow(gaussian, rgba(0,212,255,0.15), 10, 0, 0, 2);");
 
-        List<Account> accounts = accountController.getUserAccounts(currentUser.getUserId());
+    List<Account> accounts = accountController.getUserAccounts(currentUser.getUserId());
 
         ComboBox<Account> fromCombo = new ComboBox<>();
         ComboBox<Account> toCombo = new ComboBox<>();
@@ -1186,11 +1377,12 @@ public class ModernBankingApp extends Application {
                 } else if (fromAccount.getAccountId() == toAccount.getAccountId()) {
                     messageLabel.setText("⚠ Cannot transfer to the same account");
                     messageLabel.setStyle("-fx-text-fill: #f39c12;");
-                } else if (accountController.transferFunds(
-                        fromAccount.getAccountId(),
-                        toAccount.getAccountId(),
-                        amount,
-                        description)) {
+        } else if (accountController.transferFunds(
+            currentUser.getUserId(),
+            fromAccount.getAccountId(),
+            toAccount.getAccountId(),
+            amount,
+            description)) {
                     messageLabel.setText("✓ Transfer successful!");
                     messageLabel.setStyle("-fx-text-fill: #1abc9c;");
                     amountField.clear();
@@ -1238,7 +1430,7 @@ public class ModernBankingApp extends Application {
         titleLabel.setStyle("-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #00d4ff; -fx-letter-spacing: 1;");
 
         VBox transactionBox = new VBox(10);
-        List<Transaction> transactions = accountController.getTransactionHistory(currentUser.getUserId());
+    List<Transaction> transactions = accountController.getTransactionHistory(currentUser.getUserId());
 
         if (transactions.isEmpty()) {
             Label emptyLabel = new Label("No transactions found");

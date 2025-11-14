@@ -13,6 +13,10 @@ public class Transaction implements Serializable {
     private LocalDate date;
     private String accountNumber;
     private String status;
+       private String approvalStatus;
+       private Integer approverId;
+       private LocalDate approvalDate;
+       private String denialReason;
     
     public Transaction(String transactionId, String transactionType, double amount, 
                       LocalDate date, String accountNumber, String status) {
@@ -22,6 +26,10 @@ public class Transaction implements Serializable {
         this.date = date;
         this.accountNumber = accountNumber;
         this.status = status;
+           this.approvalStatus = "PENDING";
+           this.approverId = null;
+           this.approvalDate = null;
+           this.denialReason = null;
     }
     
     public boolean processTransaction(double amount) {
@@ -45,6 +53,10 @@ public class Transaction implements Serializable {
     public LocalDate getDate() { return date; }
     public String getAccountNumber() { return accountNumber; }
     public String getStatus() { return status; }
+       public String getApprovalStatus() { return approvalStatus; }
+       public Integer getApproverId() { return approverId; }
+       public LocalDate getApprovalDate() { return approvalDate; }
+       public String getDenialReason() { return denialReason; }
     
     /**
      * Alias for getDate() - used by ModernBankingApp
@@ -77,4 +89,29 @@ public class Transaction implements Serializable {
     public void setAmount(double amount) { this.amount = amount; }
     public void setDate(LocalDate date) { this.date = date; }
     public void setStatus(String status) { this.status = status; }
+       public void setApprovalStatus(String approvalStatus) { this.approvalStatus = approvalStatus; }
+       public void setApproverId(Integer approverId) { this.approverId = approverId; }
+       public void setApprovalDate(LocalDate approvalDate) { this.approvalDate = approvalDate; }
+       public void setDenialReason(String denialReason) { this.denialReason = denialReason; }
+   
+       /**
+        * Approve transaction
+        */
+       public void approve(Integer adminId) {
+           this.approvalStatus = "APPROVED";
+           this.approverId = adminId;
+           this.approvalDate = LocalDate.now();
+           this.denialReason = null;
+       }
+   
+       /**
+        * Deny transaction with reason
+        */
+       public void deny(Integer adminId, String reason) {
+           this.approvalStatus = "DENIED";
+           this.approverId = adminId;
+           this.approvalDate = LocalDate.now();
+           this.denialReason = reason;
+       }
+// Removed extra closing brace
 }

@@ -105,6 +105,26 @@ public class TransactionDAO {
         return false;
     }
 
+    // UPDATE (full transaction object) - used for approval workflow
+    public boolean update(Transaction transaction) {
+        String sql = "UPDATE TRANSACTION SET TRANSACTION_TYPE=?, AMOUNT=?, STATUS=? WHERE TRANSACTION_ID=?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, transaction.getTransactionType());
+            pstmt.setDouble(2, transaction.getAmount());
+            pstmt.setString(3, transaction.getStatus());
+            pstmt.setString(4, transaction.getTransactionId());
+
+            int rows = pstmt.executeUpdate();
+            if (rows > 0) {
+                System.out.println("✓ Transaction updated: " + transaction.getTransactionId());
+                return true;
+            }
+        } catch (SQLException e) {
+            System.out.println("✗ Error updating transaction: " + e.getMessage());
+        }
+        return false;
+    }
+
     // DELETE
     public boolean delete(String transactionId) {
         String sql = "DELETE FROM TRANSACTION WHERE TRANSACTION_ID=?";

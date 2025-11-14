@@ -1,23 +1,24 @@
 package com.banking.service;
 
 import com.banking.model.*;
+import com.banking.persistence.*;
 import java.util.*;
+import java.time.LocalDate;
 
 public class Bank {
     private String bankName;
-    private List<Customer> customers;
-    private List<Account> accounts;
+    private DatabaseManager dbManager;
     
     public Bank(String bankName) {
         this.bankName = bankName;
-        this.customers = new ArrayList<>();
-        this.accounts = new ArrayList<>();
+        this.dbManager = new DatabaseManager();
     }
     
     public void addCustomer(Customer customer) {
-        if (customer != null && !customers.contains(customer)) {
-            customers.add(customer);
-            System.out.println("✓ Customer " + customer.getCustomerId() + " added to bank");
+        if (customer != null) {
+            if (dbManager.saveCustomer(customer)) {
+                System.out.println("✓ Customer " + customer.getCustomerId() + " saved to database");
+            }
         }
     }
     
@@ -27,18 +28,36 @@ public class Bank {
             return null;
         }
         
+        // Ensure customer is in database
+        Customer dbCustomer = dbManager.getCustomer(customer.getCustomerId());
+        if (dbCustomer == null) {
+            dbManager.saveCustomer(customer);
+            dbCustomer = customer;
+        }
+        
         String accountNumber = generateAccountNumber(accountType);
         Account account = null;
         
         switch (accountType.toLowerCase()) {
             case "savings":
-                account = new SavingsAccount(accountNumber, customer);
+                account = new SavingsAccount(accountNumber, dbCustomer);
                 break;
             case "investment":
-                account = new InvestmentAccount(accountNumber, customer);
+                account = new InvestmentAccount(accountNumber, dbCustomer);
                 break;
             case "cheque":
-                account = new ChequeAccount(accountNumber, customer, "", "");
+            case "checking":
+                account = new ChequeAccount(accountNumber, dbCustomer, "", "");
+                break;
+            case "money market":
+            case "moneymarket":
+                account = new MoneyMarketAccount(accountNumber, dbCustomer);
+                break;
+            case "cd":
+            case "certificate of deposit":
+            case "certificateofdeposit":
+                // Default to 12-month CD term
+                account = new CertificateOfDepositAccount(accountNumber, dbCustomer, 12);
                 break;
             default:
                 System.out.println("✗ Unknown account type");
@@ -46,9 +65,11 @@ public class Bank {
         }
         
         if (account != null) {
-            accounts.add(account);
-            customer.addAccount(account);
-            System.out.println("✓ " + accountType + " account " + accountNumber + " opened successfully");
+            account.setDateOpened(LocalDate.now());
+            if (dbManager.saveAccount(account)) {
+                dbCustomer.addAccount(account);
+                System.out.println("✓ " + accountType + " account " + accountNumber + " saved to database");
+            }
         }
         
         return account;
@@ -56,23 +77,27 @@ public class Bank {
     
     public void processMonthlyInterest() {
         System.out.println("\n--- Processing Monthly Interest ---");
+        List<Account> accounts = getAllAccounts();
         for (Account account : accounts) {
             account.payInterest();
+            dbManager.updateAccount(account);
         }
     }
     
     public Customer getCustomerById(String customerId) {
-        return customers.stream()
-            .filter(c -> c.getCustomerId().equals(customerId))
-            .findFirst()
-            .orElse(null);
+        return dbManager.getCustomer(customerId);
     }
     
     public Customer getCustomerByEmail(String email) {
+        List<Customer> customers = dbManager.getAllCustomers();
         return customers.stream()
             .filter(c -> c.getEmail().equals(email))
             .findFirst()
             .orElse(null);
+    }
+
+    public boolean updateCustomer(Customer customer) {
+        return dbManager.updateCustomer(customer);
     }
     
     private String generateAccountNumber(String type) {
@@ -80,11 +105,33 @@ public class Bank {
     }
     
     public List<Customer> getAllCustomers() {
-        return new ArrayList<>(customers);
+        return dbManager.getAllCustomers();
     }
     
     public List<Account> getAllAccounts() {
-        return new ArrayList<>(accounts);
+        return dbManager.getCustomerAccounts("*");
+    }
+    
+    /**
+     * Get all accounts - workaround to fetch all accounts from all customers
+     */
+    public List<Account> getAllAccountsForCustomer(String customerId) {
+        return dbManager.getCustomerAccounts(customerId);
+    }
+    
+    public void recordTransaction(Transaction transaction) {
+        dbManager.saveTransaction(transaction);
+    }
+    
+    public List<Transaction> getTransactionHistory(String accountNumber) {
+        return dbManager.getAccountTransactions(accountNumber);
+    }
+
+    /**
+     * Get a single account by account number
+     */
+    public Account getAccount(String accountNumber) {
+        return dbManager.getAccount(accountNumber);
     }
     
     public String getBankName() { return bankName; }

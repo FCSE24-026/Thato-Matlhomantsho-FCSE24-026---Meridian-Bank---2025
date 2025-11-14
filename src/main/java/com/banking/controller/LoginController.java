@@ -76,6 +76,12 @@ public class LoginController {
         Customer customer = bank.getCustomerByEmail(username);
 
         if (customer != null) {
+            // Prevent unapproved customers from logging in (but allow admin/teller)
+            if (customer.getRole() == com.banking.main.Role.CUSTOMER && !customer.isApproved()) {
+                System.out.println("✗ Customer account pending approval: " + customer.getEmail());
+                return false;
+            }
+
             this.currentLoggedInCustomer = customer;
             System.out.println("✓ Authentication successful for: " + 
                              customer.getFirstName() + " " + customer.getSurname());
@@ -106,12 +112,14 @@ public class LoginController {
         }
         Customer customer = bank.getCustomerByEmail(username);
         if (customer != null) {
-            return new User(customer.getCustomerId().hashCode(), 
+            User user = new User(customer.getCustomerId(), 
                            username, 
                            "", // password not used 
                            customer.getEmail(),
                            customer.getPhoneNumber(),
                            customer.getRole());
+            System.out.println("[AUTH] Mapped user '" + username + "' -> role=" + (customer.getRole() != null ? customer.getRole().name() : "NULL"));
+            return user;
         }
         return null;
     }

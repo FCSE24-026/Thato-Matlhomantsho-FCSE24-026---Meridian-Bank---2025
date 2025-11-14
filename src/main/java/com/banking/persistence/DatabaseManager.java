@@ -2,16 +2,126 @@ package com.banking.persistence;
 
 import com.banking.model.*;
 import java.util.*;
+import java.sql.*;
 
 public class DatabaseManager {
     private CustomerDAO customerDAO;
     private AccountDAO accountDAO;
     private TransactionDAO transactionDAO;
+    private Connection connection;
+    private static final String[] INIT_SCRIPTS = {
+        "CREATE DATABASE IF NOT EXISTS banking_system;",
+        "USE banking_system;",
+        "CREATE TABLE IF NOT EXISTS CUSTOMER (" +
+            "CUSTOMER_ID VARCHAR(50) PRIMARY KEY," +
+            "FIRST_NAME VARCHAR(100) NOT NULL," +
+            "SURNAME VARCHAR(100) NOT NULL," +
+            "ADDRESS VARCHAR(255) NOT NULL," +
+            "PHONE_NUMBER VARCHAR(20) NOT NULL," +
+            "EMAIL VARCHAR(100) NOT NULL," +
+            "ROLE VARCHAR(20) DEFAULT 'CUSTOMER'," +
+            "APPROVED TINYINT(1) DEFAULT 1," +
+            "DATE_OF_BIRTH DATE," +
+            "CREATED_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP);",
+        "CREATE TABLE IF NOT EXISTS ACCOUNT (" +
+            "ACCOUNT_NUMBER VARCHAR(50) PRIMARY KEY," +
+            "ACCOUNT_TYPE VARCHAR(20) NOT NULL," +
+            "BALANCE DOUBLE NOT NULL DEFAULT 0.0," +
+            "BRANCH VARCHAR(100) NOT NULL," +
+            "CUSTOMER_ID VARCHAR(50) NOT NULL," +
+            "DATE_OPENED DATE NOT NULL," +
+            "LAST_INTEREST_DATE DATE," +
+            "EMPLOYER VARCHAR(100)," +
+            "EMPLOYER_ADDRESS VARCHAR(255)," +
+            "INTEREST_RATE DOUBLE," +
+            "MINIMUM_BALANCE DOUBLE," +
+            "FOREIGN KEY (CUSTOMER_ID) REFERENCES CUSTOMER(CUSTOMER_ID)," +
+            "CREATED_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP);",
+        "CREATE TABLE IF NOT EXISTS TRANSACTION (" +
+            "TRANSACTION_ID VARCHAR(50) PRIMARY KEY," +
+            "TRANSACTION_TYPE VARCHAR(20) NOT NULL," +
+            "AMOUNT DOUBLE NOT NULL," +
+            "TRANSACTION_DATE DATE NOT NULL," +
+            "ACCOUNT_NUMBER VARCHAR(50) NOT NULL," +
+            "STATUS VARCHAR(20) NOT NULL," +
+            "CREATED_TIMESTAMP TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+            "FOREIGN KEY (ACCOUNT_NUMBER) REFERENCES ACCOUNT(ACCOUNT_NUMBER));",
+        "CREATE INDEX IF NOT EXISTS idx_customer_id ON ACCOUNT(CUSTOMER_ID);",
+        "CREATE INDEX IF NOT EXISTS idx_account_number ON TRANSACTION(ACCOUNT_NUMBER);"
+    };
 
     public DatabaseManager() {
+        this.connection = DatabaseConnection.getInstance().getConnection();
         this.customerDAO = new CustomerDAO();
         this.accountDAO = new AccountDAO();
         this.transactionDAO = new TransactionDAO();
+        initializeDatabase();
+    }
+
+    /**
+     * Initialize the database schema if it doesn't exist
+     */
+    public void initializeDatabase() {
+        try {
+            System.out.println("\n📊 Initializing Database Schema...");
+            Statement stmt = connection.createStatement();
+            
+            // Create database
+            stmt.executeUpdate(INIT_SCRIPTS[0]);
+            System.out.println("✓ Database created/verified");
+            
+            // Use database
+            stmt.executeUpdate(INIT_SCRIPTS[1]);
+            System.out.println("✓ Database selected");
+            
+            // Create tables
+            for (int i = 2; i < INIT_SCRIPTS.length; i++) {
+                try {
+                    stmt.executeUpdate(INIT_SCRIPTS[i]);
+                    System.out.println("✓ Schema initialized");
+                } catch (SQLException e) {
+                    // Table might already exist, which is fine
+                    if (!e.getMessage().contains("already exists")) {
+                        System.out.println("⚠ Warning: " + e.getMessage());
+                    }
+                }
+            }
+            // Ensure CUSTOMER has ROLE and APPROVED columns (for upgrades)
+            try {
+                stmt.executeUpdate("ALTER TABLE CUSTOMER ADD COLUMN ROLE VARCHAR(20) DEFAULT 'CUSTOMER'");
+                System.out.println("✓ CUSTOMER.ROLE column added");
+            } catch (SQLException ignored) {}
+            try {
+                stmt.executeUpdate("ALTER TABLE CUSTOMER ADD COLUMN APPROVED TINYINT(1) DEFAULT 1");
+                System.out.println("✓ CUSTOMER.APPROVED column added");
+            } catch (SQLException ignored) {}
+            try {
+                stmt.executeUpdate("ALTER TABLE CUSTOMER ADD COLUMN SUSPENDED TINYINT(1) DEFAULT 0");
+                System.out.println("✓ CUSTOMER.SUSPENDED column added");
+            } catch (SQLException ignored) {}
+            // Ensure TRANSACTION has approval tracking columns
+            try {
+                stmt.executeUpdate("ALTER TABLE TRANSACTION ADD COLUMN APPROVAL_STATUS VARCHAR(20) DEFAULT 'PENDING'");
+                System.out.println("✓ TRANSACTION.APPROVAL_STATUS column added");
+            } catch (SQLException ignored) {}
+            try {
+                stmt.executeUpdate("ALTER TABLE TRANSACTION ADD COLUMN APPROVER_ID INT NULL");
+                System.out.println("✓ TRANSACTION.APPROVER_ID column added");
+            } catch (SQLException ignored) {}
+            try {
+                stmt.executeUpdate("ALTER TABLE TRANSACTION ADD COLUMN APPROVAL_DATE DATE NULL");
+                System.out.println("✓ TRANSACTION.APPROVAL_DATE column added");
+            } catch (SQLException ignored) {}
+            try {
+                stmt.executeUpdate("ALTER TABLE TRANSACTION ADD COLUMN DENIAL_REASON VARCHAR(255) NULL");
+                System.out.println("✓ TRANSACTION.DENIAL_REASON column added");
+            } catch (SQLException ignored) {}
+            stmt.close();
+            System.out.println("✓ Database schema ready\n");
+        } catch (SQLException e) {
+            System.out.println("✗ Error initializing database: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     // Customer operations
@@ -33,5 +143,6 @@ public class DatabaseManager {
     public Transaction getTransaction(String transactionId) { return transactionDAO.read(transactionId); }
     public List<Transaction> getAccountTransactions(String accountNumber) { return transactionDAO.readByAccount(accountNumber); }
     public boolean updateTransactionStatus(String transactionId, String status) { return transactionDAO.updateStatus(transactionId, status); }
+    public boolean updateTransaction(Transaction transaction) { return transactionDAO.update(transaction); }
     public boolean deleteTransaction(String transactionId) { return transactionDAO.delete(transactionId); }
 }

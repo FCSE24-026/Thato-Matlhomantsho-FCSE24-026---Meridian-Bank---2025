@@ -75,13 +75,64 @@ public class AccountController {
     }
     
     /**
+     * Open a new Money Market Account (requires minimum BWP 1000)
+     */
+    public Account openMoneyMarketAccount(Customer customer, double initialDeposit) {
+        if (customer == null) {
+            System.out.println("✗ Customer is null");
+            return null;
+        }
+        
+        if (initialDeposit < MoneyMarketAccount.getMinimumOpening()) {
+            System.out.println("✗ Minimum opening balance: BWP " + 
+                             MoneyMarketAccount.getMinimumOpening());
+            return null;
+        }
+        
+        Account account = bank.openAccount(customer, "money market");
+        if (account != null) {
+            account.deposit(initialDeposit);
+        }
+        return account;
+    }
+    
+    /**
+     * Open a new Certificate of Deposit Account (requires minimum BWP 500)
+     */
+    public Account openCertificateOfDepositAccount(Customer customer, double initialDeposit, int termMonths) {
+        if (customer == null) {
+            System.out.println("✗ Customer is null");
+            return null;
+        }
+        
+        if (initialDeposit < CertificateOfDepositAccount.getMinimumOpening()) {
+            System.out.println("✗ Minimum opening balance: BWP " + 
+                             CertificateOfDepositAccount.getMinimumOpening());
+            return null;
+        }
+        
+        if (termMonths <= 0) {
+            System.out.println("✗ CD term must be greater than 0 months");
+            return null;
+        }
+        
+        // For simplicity, directly create CD account via bank service
+        Account account = bank.openAccount(customer, "cd");
+        if (account != null) {
+            account.deposit(initialDeposit);
+        }
+        return account;
+    }
+
+    
+    /**
      * Get all accounts for a customer
      */
     public List<Account> getCustomerAccounts(Customer customer) {
         if (customer == null) {
             return new ArrayList<>();
         }
-        return customer.getAccounts();
+        return bank.getAllAccountsForCustomer(customer.getCustomerId());
     }
     
     /**
@@ -91,7 +142,7 @@ public class AccountController {
         if (customer == null || accountNumber == null) {
             return null;
         }
-        return customer.getAccountByNumber(accountNumber);
+        return bank.getAccount(accountNumber);
     }
     
     /**
@@ -111,7 +162,7 @@ public class AccountController {
         if (customer == null) {
             return 0.0;
         }
-        return customer.getAccounts().stream()
+        return bank.getAllAccountsForCustomer(customer.getCustomerId()).stream()
             .mapToDouble(Account::getBalance)
             .sum();
     }
@@ -119,10 +170,10 @@ public class AccountController {
     /**
      * Get total balance for a user (by customer ID) - used by ModernBankingApp
      */
-    public double getTotalBalance(int customerId) {
-        // Find customer by ID and return total balance
+    public double getTotalBalance(String customerId) {
+        if (customerId == null) return 0.0;
         for (Customer customer : bank.getAllCustomers()) {
-            if (customer.getCustomerId().hashCode() == customerId) {
+            if (customer.getCustomerId().equals(customerId)) {
                 return getTotalCustomerBalance(customer);
             }
         }
@@ -132,11 +183,12 @@ public class AccountController {
     /**
      * Get user accounts by user ID - used by ModernBankingApp
      */
-    public List<Account> getUserAccounts(int customerId) {
+    public List<Account> getUserAccounts(String customerId) {
+        if (customerId == null) return new ArrayList<>();
         // Find customer by ID and return accounts
         for (Customer customer : bank.getAllCustomers()) {
-            if (customer.getCustomerId().hashCode() == customerId) {
-                return customer.getAccounts();
+            if (customer.getCustomerId().equals(customerId)) {
+                return bank.getAllAccountsForCustomer(customer.getCustomerId());
             }
         }
         return new ArrayList<>();
@@ -145,11 +197,12 @@ public class AccountController {
     /**
      * Get transaction history for a user - used by ModernBankingApp
      */
-    public List<Transaction> getTransactionHistory(int customerId) {
+    public List<Transaction> getTransactionHistory(String customerId) {
         List<Transaction> allTransactions = new ArrayList<>();
+        if (customerId == null) return allTransactions;
         for (Customer customer : bank.getAllCustomers()) {
-            if (customer.getCustomerId().hashCode() == customerId) {
-                for (Account account : customer.getAccounts()) {
+            if (customer.getCustomerId().equals(customerId)) {
+                for (Account account : bank.getAllAccountsForCustomer(customer.getCustomerId())) {
                     allTransactions.addAll(account.getTransactions());
                 }
             }
@@ -160,9 +213,10 @@ public class AccountController {
     /**
      * Create account for user - used by ModernBankingApp
      */
-    public boolean createAccount(int customerId, String accountType) {
+    public boolean createAccount(String customerId, String accountType) {
+        if (customerId == null) return false;
         for (Customer customer : bank.getAllCustomers()) {
-            if (customer.getCustomerId().hashCode() == customerId) {
+            if (customer.getCustomerId().equals(customerId)) {
                 Account account = bank.openAccount(customer, accountType.toLowerCase());
                 return account != null;
             }
@@ -210,5 +264,37 @@ public class AccountController {
                              (description != null ? description : "No description"));
         }
         return success;
+    }
+
+    /**
+     * Owner-checked transfer: ensures caller owns the source account before transfer.
+     * callerCustomerId is the hashed customerId passed from the UI (currentUser.getUserId()).
+     */
+    public boolean transferFunds(String callerCustomerId, String fromAccountId, String toAccountId,
+                                 double amount, String description) {
+        // locate the owner of the source account
+        Customer owner = null;
+        for (Customer c : bank.getAllCustomers()) {
+            for (Account a : bank.getAllAccountsForCustomer(c.getCustomerId())) {
+                if (a.getAccountId().equals(fromAccountId)) {
+                    owner = c;
+                    break;
+                }
+            }
+            if (owner != null) break;
+        }
+
+        if (owner == null) {
+            System.out.println("✗ Source account owner not found");
+            return false;
+        }
+
+        if (!owner.getCustomerId().equals(callerCustomerId)) {
+            System.out.println("✗ Unauthorized: caller does not own the source account");
+            return false;
+        }
+
+        // delegate to existing transfer method
+        return transferFunds(fromAccountId, toAccountId, amount, description);
     }
 }
