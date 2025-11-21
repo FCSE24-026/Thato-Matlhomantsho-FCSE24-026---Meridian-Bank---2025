@@ -8,6 +8,7 @@ public class DatabaseManager {
     private CustomerDAO customerDAO;
     private AccountDAO accountDAO;
     private TransactionDAO transactionDAO;
+    private AuditDAO auditDAO;
     private Connection connection;
     private static final String[] INIT_SCRIPTS = {
         "CREATE DATABASE IF NOT EXISTS banking_system;",
@@ -47,7 +48,19 @@ public class DatabaseManager {
             "CREATED_TIMESTAMP TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
             "FOREIGN KEY (ACCOUNT_NUMBER) REFERENCES ACCOUNT(ACCOUNT_NUMBER));",
         "CREATE INDEX IF NOT EXISTS idx_customer_id ON ACCOUNT(CUSTOMER_ID);",
-        "CREATE INDEX IF NOT EXISTS idx_account_number ON TRANSACTION(ACCOUNT_NUMBER);"
+        "CREATE INDEX IF NOT EXISTS idx_account_number ON TRANSACTION(ACCOUNT_NUMBER);",
+        "CREATE TABLE IF NOT EXISTS AUDIT_LOG (" +
+            "ID VARCHAR(100) PRIMARY KEY," +
+            "TIMESTAMP VARCHAR(50) NOT NULL," +
+            "ACTOR_ID VARCHAR(50)," +
+            "ACTOR_EMAIL VARCHAR(100)," +
+            "ACTION_TYPE VARCHAR(100)," +
+            "TARGET_TYPE VARCHAR(50)," +
+            "TARGET_ID VARCHAR(100)," +
+            "DETAILS TEXT," +
+            "STATUS VARCHAR(50)," +
+            "CREATED_TIMESTAMP TIMESTAMP DEFAULT CURRENT_TIMESTAMP);",
+        "CREATE INDEX IF NOT EXISTS idx_audit_ts ON AUDIT_LOG(TIMESTAMP);"
     };
 
     public DatabaseManager() {
@@ -55,6 +68,7 @@ public class DatabaseManager {
         this.customerDAO = new CustomerDAO();
         this.accountDAO = new AccountDAO();
         this.transactionDAO = new TransactionDAO();
+        this.auditDAO = new AuditDAO();
         initializeDatabase();
     }
 
@@ -116,6 +130,10 @@ public class DatabaseManager {
                 stmt.executeUpdate("ALTER TABLE TRANSACTION ADD COLUMN DENIAL_REASON VARCHAR(255) NULL");
                 System.out.println("✓ TRANSACTION.DENIAL_REASON column added");
             } catch (SQLException ignored) {}
+            try {
+                stmt.executeUpdate("ALTER TABLE AUDIT_LOG ADD COLUMN STATUS VARCHAR(50) DEFAULT 'LOGGED'");
+                System.out.println("✓ AUDIT_LOG.STATUS column ensured");
+            } catch (SQLException ignored) {}
             stmt.close();
             System.out.println("✓ Database schema ready\n");
         } catch (SQLException e) {
@@ -137,6 +155,15 @@ public class DatabaseManager {
     public List<Account> getCustomerAccounts(String customerId) { return accountDAO.readByCustomer(customerId); }
     public boolean updateAccount(Account account) { return accountDAO.update(account); }
     public boolean deleteAccount(String accountNumber) { return accountDAO.delete(accountNumber); }
+
+    // Audit operations
+    public boolean saveAuditLog(com.banking.model.AuditLog log) {
+        return auditDAO.create(log);
+    }
+
+    public java.util.List<com.banking.model.AuditLog> getAllAuditLogs() {
+        return auditDAO.readAll();
+    }
 
     // Transaction operations
     public boolean saveTransaction(Transaction transaction) { return transactionDAO.create(transaction); }

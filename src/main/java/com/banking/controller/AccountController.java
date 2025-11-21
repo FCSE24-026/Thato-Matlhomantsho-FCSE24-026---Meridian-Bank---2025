@@ -20,6 +20,9 @@ public class AccountController {
             return null;
         }
         Account account = bank.openAccount(customer, "savings");
+        if (account != null) {
+            try { bank.logAction(customer.getCustomerId(), customer.getEmail(), "OPEN_ACCOUNT", "ACCOUNT", account.getAccountId(), "Opened savings account", "OK"); } catch (Exception ex) {}
+        }
         return account;
     }
     
@@ -41,6 +44,9 @@ public class AccountController {
         Account account = bank.openAccount(customer, "investment");
         if (account != null) {
             account.deposit(initialDeposit);
+            // Persist the account with the initial deposit
+            bank.updateAccount(account);
+            try { bank.logAction(customer.getCustomerId(), customer.getEmail(), "OPEN_ACCOUNT", "ACCOUNT", account.getAccountId(), "Opened investment account", "OK"); } catch (Exception ex) {}
         }
         return account;
     }
@@ -70,6 +76,7 @@ public class AccountController {
             ChequeAccount chequeAcc = (ChequeAccount) account;
             chequeAcc.setEmployer(employerName);
             chequeAcc.setCompanyAddress(employerAddress);
+            try { bank.logAction(customer.getCustomerId(), customer.getEmail(), "OPEN_ACCOUNT", "ACCOUNT", account.getAccountId(), "Opened cheque account", "OK"); } catch (Exception ex) {}
         }
         return account;
     }
@@ -77,52 +84,12 @@ public class AccountController {
     /**
      * Open a new Money Market Account (requires minimum BWP 1000)
      */
-    public Account openMoneyMarketAccount(Customer customer, double initialDeposit) {
-        if (customer == null) {
-            System.out.println("✗ Customer is null");
-            return null;
-        }
-        
-        if (initialDeposit < MoneyMarketAccount.getMinimumOpening()) {
-            System.out.println("✗ Minimum opening balance: BWP " + 
-                             MoneyMarketAccount.getMinimumOpening());
-            return null;
-        }
-        
-        Account account = bank.openAccount(customer, "money market");
-        if (account != null) {
-            account.deposit(initialDeposit);
-        }
-        return account;
-    }
+    
     
     /**
      * Open a new Certificate of Deposit Account (requires minimum BWP 500)
      */
-    public Account openCertificateOfDepositAccount(Customer customer, double initialDeposit, int termMonths) {
-        if (customer == null) {
-            System.out.println("✗ Customer is null");
-            return null;
-        }
-        
-        if (initialDeposit < CertificateOfDepositAccount.getMinimumOpening()) {
-            System.out.println("✗ Minimum opening balance: BWP " + 
-                             CertificateOfDepositAccount.getMinimumOpening());
-            return null;
-        }
-        
-        if (termMonths <= 0) {
-            System.out.println("✗ CD term must be greater than 0 months");
-            return null;
-        }
-        
-        // For simplicity, directly create CD account via bank service
-        Account account = bank.openAccount(customer, "cd");
-        if (account != null) {
-            account.deposit(initialDeposit);
-        }
-        return account;
-    }
+    
 
     
     /**
@@ -132,7 +99,14 @@ public class AccountController {
         if (customer == null) {
             return new ArrayList<>();
         }
-        return bank.getAllAccountsForCustomer(customer.getCustomerId());
+        // Always fetch fresh from DB to ensure we have latest balances and transactions
+        List<Account> accounts = bank.getAllAccountsForCustomer(customer.getCustomerId());
+        // Update the customer's in-memory accounts list with fresh data
+        if (customer != null) {
+            customer.getAccounts().clear();
+            customer.getAccounts().addAll(accounts);
+        }
+        return accounts;
     }
     
     /**
@@ -185,10 +159,14 @@ public class AccountController {
      */
     public List<Account> getUserAccounts(String customerId) {
         if (customerId == null) return new ArrayList<>();
-        // Find customer by ID and return accounts
+        // Always fetch fresh from DB instead of using in-memory cached accounts
         for (Customer customer : bank.getAllCustomers()) {
             if (customer.getCustomerId().equals(customerId)) {
-                return bank.getAllAccountsForCustomer(customer.getCustomerId());
+                // Fetch fresh from DB and sync with in-memory customer object
+                List<Account> accounts = bank.getAllAccountsForCustomer(customer.getCustomerId());
+                customer.getAccounts().clear();
+                customer.getAccounts().addAll(accounts);
+                return accounts;
             }
         }
         return new ArrayList<>();
@@ -203,10 +181,13 @@ public class AccountController {
         for (Customer customer : bank.getAllCustomers()) {
             if (customer.getCustomerId().equals(customerId)) {
                 for (Account account : bank.getAllAccountsForCustomer(customer.getCustomerId())) {
-                    allTransactions.addAll(account.getTransactions());
+                    List<Transaction> txns = account.getTransactions();
+                    System.out.println("✓ Loaded " + txns.size() + " transactions for account " + account.getAccountNumber());
+                    allTransactions.addAll(txns);
                 }
             }
         }
+        System.out.println("✓ Total transactions for customer " + customerId + ": " + allTransactions.size());
         return allTransactions;
     }
     
@@ -262,6 +243,32 @@ public class AccountController {
         if (success) {
             System.out.println("✓ Transfer of " + amount + " completed: " + 
                              (description != null ? description : "No description"));
+            try {
+                // actor is the owner of the source account
+                // find owner
+                String ownerId = null; String ownerEmail = null;
+                for (Customer c : bank.getAllCustomers()) {
+                    for (Account a : bank.getAllAccountsForCustomer(c.getCustomerId())) {
+                        if (a.getAccountId().equals(fromAccountId)) { ownerId = c.getCustomerId(); ownerEmail = c.getEmail(); break; }
+                    }
+                    if (ownerId != null) break;
+                }
+                bank.logAction(ownerId, ownerEmail, "TRANSFER", "TRANSACTION", fromAccountId + "->" + toAccountId, "Amount: " + amount + (description != null ? " desc=" + description : ""), "OK");
+                // persist transaction records and update accounts
+                try {
+                    String txOutId = "TXN_" + java.util.UUID.randomUUID().toString();
+                    Transaction txOut = new Transaction(txOutId, "WITHDRAWAL", amount, java.time.LocalDate.now(), fromAccount.getAccountNumber(), "SUCCESS");
+                    bank.recordTransaction(txOut);
+                    bank.updateAccount(fromAccount);
+
+                    String txInId = "TXN_" + java.util.UUID.randomUUID().toString();
+                    Transaction txIn = new Transaction(txInId, "DEPOSIT", amount, java.time.LocalDate.now(), toAccount.getAccountNumber(), "SUCCESS");
+                    bank.recordTransaction(txIn);
+                    bank.updateAccount(toAccount);
+                } catch (Exception ex) {
+                    System.out.println("⚠ Warning: could not persist transfer transactions: " + ex.getMessage());
+                }
+            } catch (Exception ex) {}
         }
         return success;
     }

@@ -26,11 +26,20 @@ public class TransactionController {
         }
         
         boolean success = account.deposit(amount);
-        
+
         if (success) {
             System.out.println("✓ Deposit processed successfully");
+            // persist transaction and account state
+            try {
+                String txnId = "TXN_" + java.util.UUID.randomUUID().toString();
+                Transaction txn = new Transaction(txnId, "DEPOSIT", amount, java.time.LocalDate.now(), account.getAccountNumber(), "SUCCESS");
+                bank.recordTransaction(txn);
+                bank.updateAccount(account);
+            } catch (Exception ex) {
+                System.out.println("⚠ Warning: could not persist deposit transaction: " + ex.getMessage());
+            }
         }
-        
+
         return success;
     }
     
@@ -55,11 +64,19 @@ public class TransactionController {
         }
         
         boolean success = account.withdraw(amount);
-        
+
         if (success) {
             System.out.println("✓ Withdrawal processed successfully");
+            try {
+                String txnId = "TXN_" + java.util.UUID.randomUUID().toString();
+                Transaction txn = new Transaction(txnId, "WITHDRAWAL", amount, java.time.LocalDate.now(), account.getAccountNumber(), "SUCCESS");
+                bank.recordTransaction(txn);
+                bank.updateAccount(account);
+            } catch (Exception ex) {
+                System.out.println("⚠ Warning: could not persist withdrawal transaction: " + ex.getMessage());
+            }
         }
-        
+
         return success;
     }
     

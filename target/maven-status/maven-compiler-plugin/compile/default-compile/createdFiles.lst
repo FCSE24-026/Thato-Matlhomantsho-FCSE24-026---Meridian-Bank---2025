@@ -10,10 +10,12 @@ com\banking\model\ChequeAccount.class
 com\banking\model\InvestmentAccount.class
 com\banking\model\CertificateOfDepositAccount.class
 com\banking\main\ModernBankingApp$5.class
+com\banking\main\ModernBankingApp$7.class
 com\banking\model\Account.class
 com\banking\persistence\DatabaseConnection.class
 com\banking\controller\ApplicationController.class
 com\banking\model\MoneyMarketAccount.class
+com\banking\persistence\AuditDAO.class
 com\banking\util\PasswordUtil.class
 com\banking\main\ModernBankingApp$2.class
 com\banking\main\DataPersistenceTest.class
@@ -23,6 +25,7 @@ com\banking\controller\LoginController.class
 com\banking\controller\AccountController.class
 com\banking\main\ModernBankingApp$4.class
 com\banking\model\Customer.class
+com\banking\main\ModernBankingApp$6.class
 com\banking\view\ApplicationView.class
 com\banking\persistence\AccountDAO.class
 com\banking\persistence\CustomerDAO.class

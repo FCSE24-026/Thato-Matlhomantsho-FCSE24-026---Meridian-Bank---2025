@@ -79,12 +79,14 @@ public class LoginController {
             // Prevent unapproved customers from logging in (but allow admin/teller)
             if (customer.getRole() == com.banking.main.Role.CUSTOMER && !customer.isApproved()) {
                 System.out.println("✗ Customer account pending approval: " + customer.getEmail());
+                    try { bank.logAction(customer.getCustomerId(), customer.getEmail(), "LOGIN_ATTEMPT", "CUSTOMER", customer.getCustomerId(), "Attempt to login while pending approval", "DENIED"); } catch (Exception ex) {}
                 return false;
             }
 
             this.currentLoggedInCustomer = customer;
             System.out.println("✓ Authentication successful for: " + 
                              customer.getFirstName() + " " + customer.getSurname());
+                try { bank.logAction(customer.getCustomerId(), customer.getEmail(), "LOGIN", "CUSTOMER", customer.getCustomerId(), "Successful login", "OK"); } catch (Exception ex) {}
             if (password == null || password.isEmpty()) {
                 // Informational only — password handling not implemented
                 System.out.println("⚠ Warning: password verification not implemented; please add secure handling.");
@@ -173,8 +175,18 @@ public class LoginController {
                                            address != null ? address : "", 
                                            phone != null ? phone : "", 
                                            email, role);
+        // By default, require admin approval for regular customers
+        if (role == com.banking.main.Role.CUSTOMER) {
+            newCustomer.setApproved(false);
+        } else {
+            newCustomer.setApproved(true);
+        }
         bank.addCustomer(newCustomer);
-        System.out.println("✓ User registered successfully with ID: " + customerId + " (Role: " + role.getDisplayName() + ")");
+        if (role == com.banking.main.Role.CUSTOMER) {
+            System.out.println("✓ User registered successfully with ID: " + customerId + " (Role: " + role.getDisplayName() + ") - Pending admin approval");
+        } else {
+            System.out.println("✓ User registered successfully with ID: " + customerId + " (Role: " + role.getDisplayName() + ")");
+        }
         return true;
     }
 }

@@ -64,18 +64,20 @@ public class AccountDAO {
                 String accountType = rs.getString("ACCOUNT_TYPE");
                 // use a shallow customer load to avoid recursive account<->customer loading
                 Customer customer = new CustomerDAO().readShallow(rs.getString("CUSTOMER_ID"));
-                Account account = null;
-
-                if ("Savings Account".equals(accountType)) {
-                    account = new SavingsAccount(accountNumber, customer);
-                } else if ("Investment Account".equals(accountType)) {
-                    account = new InvestmentAccount(accountNumber, customer);
-                } else if ("Cheque Account".equals(accountType)) {
-                    account = new ChequeAccount(accountNumber, customer, "", "");
-                }
+                Account account = createAccountFromType(accountNumber, accountType, customer);
 
                 if (account != null) {
                     account.setBalance(rs.getDouble("BALANCE"));
+                    // load persisted transactions for this account
+                    try {
+                        java.util.List<com.banking.model.Transaction> txns = new TransactionDAO().readByAccount(accountNumber);
+                        for (com.banking.model.Transaction t : txns) {
+                            account.addTransaction(t);
+                        }
+                        System.out.println("✓ Loaded " + txns.size() + " transactions for account " + accountNumber);
+                    } catch (Exception e) {
+                        System.out.println("⚠ Warning: could not load transactions for account " + accountNumber + ": " + e.getMessage());
+                    }
                     return account;
                 }
             }
@@ -108,18 +110,19 @@ public class AccountDAO {
                     String custId = rs.getString("CUSTOMER_ID");
                     // use a shallow customer load to avoid recursive account<->customer loading
                     Customer customer = new CustomerDAO().readShallow(custId);
-                    Account account = null;
-
-                    if ("Savings Account".equals(accountType)) {
-                        account = new SavingsAccount(accountNumber, customer);
-                    } else if ("Investment Account".equals(accountType)) {
-                        account = new InvestmentAccount(accountNumber, customer);
-                    } else if ("Cheque Account".equals(accountType)) {
-                        account = new ChequeAccount(accountNumber, customer, "", "");
-                    }
+                    Account account = createAccountFromType(accountNumber, accountType, customer);
 
                     if (account != null) {
                         account.setBalance(rs.getDouble("BALANCE"));
+                        // load persisted transactions for this account
+                        try {
+                            java.util.List<com.banking.model.Transaction> txns = new TransactionDAO().readByAccount(accountNumber);
+                            for (com.banking.model.Transaction t : txns) {
+                                account.addTransaction(t);
+                            }
+                        } catch (Exception e) {
+                            System.out.println("⚠ Warning: could not load transactions for account " + accountNumber + ": " + e.getMessage());
+                        }
                         accounts.add(account);
                     }
                 }
@@ -134,15 +137,7 @@ public class AccountDAO {
                     while (rs.next()) {
                         String accountNumber = rs.getString("ACCOUNT_NUMBER");
                         String accountType = rs.getString("ACCOUNT_TYPE");
-                        Account account = null;
-
-                        if ("Savings Account".equals(accountType)) {
-                            account = new SavingsAccount(accountNumber, customer);
-                        } else if ("Investment Account".equals(accountType)) {
-                            account = new InvestmentAccount(accountNumber, customer);
-                        } else if ("Cheque Account".equals(accountType)) {
-                            account = new ChequeAccount(accountNumber, customer, "", "");
-                        }
+                        Account account = createAccountFromType(accountNumber, accountType, customer);
 
                         if (account != null) {
                             account.setBalance(rs.getDouble("BALANCE"));
@@ -155,6 +150,21 @@ public class AccountDAO {
             System.out.println("✗ Error reading accounts: " + e.getMessage());
         }
         return accounts;
+    }
+
+    // Helper to map stored ACCOUNT_TYPE strings to concrete Account instances
+    private Account createAccountFromType(String accountNumber, String accountType, Customer customer) {
+        if (accountType == null) return null;
+        String at = accountType.toLowerCase();
+
+        if (at.contains("saving")) {
+            return new SavingsAccount(accountNumber, customer);
+        } else if (at.contains("investment")) {
+            return new InvestmentAccount(accountNumber, customer);
+        } else if (at.contains("cheque") || at.contains("check")) {
+            return new ChequeAccount(accountNumber, customer, "", "");
+        }
+        return null;
     }
 
     // UPDATE

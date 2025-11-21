@@ -4,6 +4,8 @@ import com.banking.model.*;
 import com.banking.persistence.*;
 import java.util.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 public class Bank {
     private String bankName;
@@ -49,16 +51,6 @@ public class Bank {
             case "checking":
                 account = new ChequeAccount(accountNumber, dbCustomer, "", "");
                 break;
-            case "money market":
-            case "moneymarket":
-                account = new MoneyMarketAccount(accountNumber, dbCustomer);
-                break;
-            case "cd":
-            case "certificate of deposit":
-            case "certificateofdeposit":
-                // Default to 12-month CD term
-                account = new CertificateOfDepositAccount(accountNumber, dbCustomer, 12);
-                break;
             default:
                 System.out.println("✗ Unknown account type");
                 return null;
@@ -100,6 +92,10 @@ public class Bank {
         return dbManager.updateCustomer(customer);
     }
     
+    public boolean deleteCustomer(String customerId) {
+        return dbManager.deleteCustomer(customerId);
+    }
+    
     private String generateAccountNumber(String type) {
         return type.substring(0, 3).toUpperCase() + "_" + System.nanoTime();
     }
@@ -122,6 +118,13 @@ public class Bank {
     public void recordTransaction(Transaction transaction) {
         dbManager.saveTransaction(transaction);
     }
+
+    /**
+     * Persist updates to an account
+     */
+    public boolean updateAccount(Account account) {
+        return dbManager.updateAccount(account);
+    }
     
     public List<Transaction> getTransactionHistory(String accountNumber) {
         return dbManager.getAccountTransactions(accountNumber);
@@ -132,6 +135,27 @@ public class Bank {
      */
     public Account getAccount(String accountNumber) {
         return dbManager.getAccount(accountNumber);
+    }
+    
+    /**
+     * Delete an account by account number
+     */
+    public boolean deleteAccount(String accountNumber) {
+        return dbManager.deleteAccount(accountNumber);
+    }
+
+    /**
+     * Record an audit log entry.
+     */
+    public boolean logAction(String actorId, String actorEmail, String actionType, String targetType, String targetId, String details, String status) {
+        com.banking.model.AuditLog log = new com.banking.model.AuditLog(
+            UUID.randomUUID().toString(), actorId, actorEmail, actionType, targetType, targetId, details, status, LocalDateTime.now()
+        );
+        return dbManager.saveAuditLog(log);
+    }
+
+    public java.util.List<com.banking.model.AuditLog> getAuditLogs() {
+        return dbManager.getAllAuditLogs();
     }
     
     public String getBankName() { return bankName; }

@@ -12,6 +12,7 @@ import javafx.scene.layout.Priority;
 
 import com.banking.controller.LoginController;
 import com.banking.controller.AccountController;
+import com.banking.controller.TransactionController;
 import com.banking.model.Account;
 import com.banking.model.Customer;
 import com.banking.model.Transaction;
@@ -25,6 +26,7 @@ public class ModernBankingApp extends Application {
     private Stage primaryStage;
     private LoginController authController;
     private AccountController accountController;
+    private TransactionController transactionController;
     private User currentUser;
     private Bank bank;
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -35,6 +37,7 @@ public class ModernBankingApp extends Application {
         this.bank = new Bank("Meridian Bank");
         this.authController = new LoginController(bank);
         this.accountController = new AccountController(bank);
+        this.transactionController = new TransactionController(bank);
         
         // Initialize with seed data (test accounts)
         initializeSeedData();
@@ -384,7 +387,14 @@ public class ModernBankingApp extends Application {
                 "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
         systemStatsButton.setOnAction(e -> showSystemStatisticsScreen());
 
-        buttonRowBox.getChildren().addAll(viewUsersButton, approveRegistrationsButton, manageAccountsButton, systemStatsButton);
+        Button auditLogButton = new Button("📝 AUDIT LOGS");
+        auditLogButton.setPrefWidth(180);
+        auditLogButton.setPrefHeight(50);
+        auditLogButton.setStyle("-fx-background-color: linear-gradient(to right, #34495e, #2c3e50); " +
+            "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
+        auditLogButton.setOnAction(e -> showAuditLogScreen());
+
+        buttonRowBox.getChildren().addAll(viewUsersButton, approveRegistrationsButton, manageAccountsButton, systemStatsButton, auditLogButton);
         contentPanel.getChildren().addAll(titleLabel, buttonRowBox);
 
         mainContainer.getChildren().addAll(headerBox, contentPanel);
@@ -524,7 +534,54 @@ public class ModernBankingApp extends Application {
         roleColumn.setCellValueFactory(cellData -> 
             new javafx.beans.property.SimpleStringProperty(cellData.getValue().getRole() != null ? cellData.getValue().getRole().getDisplayName() : "N/A"));
 
-        usersTable.getColumns().addAll(nameColumn, emailColumn, phoneColumn, addressColumn, roleColumn);
+        TableColumn<Customer, Void> userActionColumn = new TableColumn<>("Action");
+        userActionColumn.setPrefWidth(140);
+        userActionColumn.setCellFactory(param -> new TableCell<Customer, Void>() {
+            private final Button deleteBtn = new Button("Delete");
+            {
+                deleteBtn.setStyle("-fx-padding: 5; -fx-font-size: 11; -fx-background-color: #e74c3c; -fx-text-fill: white; -fx-cursor: hand;");
+                deleteBtn.setOnAction(e -> {
+                    Customer customer = getTableView().getItems().get(getIndex());
+                    if (customer == null) return;
+                    // Prevent admin deleting their own user account
+                    if (currentUser != null && currentUser.getUserId() != null && currentUser.getUserId().equals(customer.getCustomerId())) {
+                        showAlert("Unauthorized", "Action denied", "You cannot delete your own admin account while logged in.", false);
+                        return;
+                    }
+                    Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+                    confirm.setTitle("Confirm Delete");
+                    confirm.setHeaderText("Delete User: " + customer.getFirstName() + " " + customer.getSurname());
+                    confirm.setContentText("Are you sure you want to delete this user? This will remove all associated accounts.");
+                    java.util.Optional<javafx.scene.control.ButtonType> result = confirm.showAndWait();
+                    if (result.isPresent() && result.get() == javafx.scene.control.ButtonType.OK) {
+                        boolean ok = bank.deleteCustomer(customer.getCustomerId());
+                        if (ok) {
+                            getTableView().getItems().remove(customer);
+                            showAlert("Success", "User Deleted", "User removed successfully.", true);
+                            try {
+                                String actorId = currentUser != null ? currentUser.getUserId() : null;
+                                String actorEmail = currentUser != null ? currentUser.getUsername() : null;
+                                bank.logAction(actorId, actorEmail, "DELETE_USER", "CUSTOMER", customer.getCustomerId(), "Deleted user: " + customer.getEmail(), "OK");
+                            } catch (Exception ex) {}
+                        } else {
+                            showAlert("Error", "Delete Failed", "Could not delete user from database.", false);
+                        }
+                    }
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getIndex() < 0 || getIndex() >= getTableView().getItems().size()) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(deleteBtn);
+                }
+            }
+        });
+
+        usersTable.getColumns().addAll(nameColumn, emailColumn, phoneColumn, addressColumn, roleColumn, userActionColumn);
 
         List<Customer> allCustomers = bank.getAllCustomers();
         usersTable.getItems().addAll(allCustomers);
@@ -593,20 +650,37 @@ public class ModernBankingApp extends Application {
             new javafx.beans.property.SimpleStringProperty(cellData.getValue().isApproved() ? "✓ APPROVED" : "⏳ PENDING"));
 
         TableColumn<Customer, Void> actionColumn = new TableColumn<>("Action");
-        actionColumn.setPrefWidth(100);
+        actionColumn.setPrefWidth(150);
         actionColumn.setCellFactory(param -> new TableCell<Customer, Void>() {
-            private final Button approveBtn = new Button("Approve");
+            private final Button approveBtn = new Button("✓ Approve");
+            private final Button denyBtn = new Button("✗ Deny");
             {
-                approveBtn.setStyle("-fx-padding: 5; -fx-font-size: 11; -fx-background-color: #27ae60; " +
+                approveBtn.setStyle("-fx-padding: 5; -fx-font-size: 10; -fx-background-color: #27ae60; " +
                         "-fx-text-fill: white; -fx-border-radius: 3; -fx-cursor: hand;");
                 approveBtn.setOnAction(event -> {
                     Customer customer = getTableView().getItems().get(getIndex());
                     if (customer != null) {
                         customer.setApproved(true);
-                        bank.addCustomer(customer); // Save the updated customer
+                        boolean ok = bank.updateCustomer(customer);
+                        if (!ok) {
+                            showAlert("Error", "Save Failed", "Could not persist approval for " + customer.getEmail(), false);
+                            return;
+                        }
                         getTableView().refresh();
-                        showAlert("Success", "Approval Complete", 
-                            customer.getFirstName() + " has been approved", true);
+                        showAlert("Success", "Customer Approved", customer.getFirstName() + " " + customer.getSurname() + " has been approved and can now login.", true);
+                    }
+                });
+
+                denyBtn.setStyle("-fx-padding: 5; -fx-font-size: 10; -fx-background-color: #e74c3c; " +
+                        "-fx-text-fill: white; -fx-border-radius: 3; -fx-cursor: hand;");
+                denyBtn.setOnAction(event -> {
+                    Customer customer = getTableView().getItems().get(getIndex());
+                    if (customer != null) {
+                        bank.deleteCustomer(customer.getCustomerId());
+                        getTableView().getItems().remove(customer);
+                        getTableView().refresh();
+                        showAlert("Info", "Registration Denied", "Registration of " + customer.getFirstName() + " has been denied and removed.", true);
+                        try { String actorId = currentUser != null ? currentUser.getUserId() : null; String actorEmail = currentUser != null ? currentUser.getUsername() : null; bank.logAction(actorId, actorEmail, "DENY_REGISTRATION", "CUSTOMER", customer.getCustomerId(), "Denied registration for " + customer.getEmail(), "DENIED"); } catch (Exception ex) {}
                     }
                 });
             }
@@ -614,10 +688,14 @@ public class ModernBankingApp extends Application {
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || getTableView().getItems().get(getIndex()).isApproved()) {
+                if (empty || getIndex() < 0 || getIndex() >= getTableView().getItems().size()) {
+                    setGraphic(null);
+                } else if (getTableView().getItems().get(getIndex()).isApproved()) {
                     setGraphic(null);
                 } else {
-                    setGraphic(approveBtn);
+                    HBox buttonBox = new HBox(5);
+                    buttonBox.getChildren().addAll(approveBtn, denyBtn);
+                    setGraphic(buttonBox);
                 }
             }
         });
@@ -739,9 +817,9 @@ public class ModernBankingApp extends Application {
 
             boolean success = false;
             if ("Deposit".equals(op)) {
-                success = acc.deposit(amt);
+                success = transactionController.processDeposit(acc, amt);
             } else if ("Withdraw".equals(op)) {
-                success = acc.withdraw(amt);
+                success = transactionController.processWithdrawal(acc, amt);
             } else if ("Transfer".equals(op)) {
                 Account target = targetAccountCombo.getValue();
                 if (target == null) { showAlert("Error", "Missing target", "Select a target account for transfer", false); return; }
@@ -808,11 +886,11 @@ public class ModernBankingApp extends Application {
         });
 
         ComboBox<String> typeCombo = new ComboBox<>();
-        typeCombo.getItems().addAll("Savings", "Investment", "Cheque", "Money Market", "CD");
+        typeCombo.getItems().addAll("Savings", "Investment", "Cheque");
         typeCombo.setValue("Savings");
 
         TextField initialDepositField = new TextField();
-        initialDepositField.setPromptText("Initial deposit (for Investment/Money Market/CD)");
+        initialDepositField.setPromptText("Initial deposit (for Investment)");
         initialDepositField.setVisible(false);
 
         TextField employerField = new TextField();
@@ -823,16 +901,11 @@ public class ModernBankingApp extends Application {
         employerAddressField.setPromptText("Employer Address (for Cheque)");
         employerAddressField.setVisible(false);
 
-        TextField cdTermField = new TextField();
-        cdTermField.setPromptText("CD Term (months) [Default: 12]");
-        cdTermField.setVisible(false);
-
         typeCombo.setOnAction(e -> {
             String t = typeCombo.getValue();
-            initialDepositField.setVisible("Investment".equals(t) || "Money Market".equals(t) || "CD".equals(t));
+            initialDepositField.setVisible("Investment".equals(t));
             employerField.setVisible("Cheque".equals(t));
             employerAddressField.setVisible("Cheque".equals(t));
-            cdTermField.setVisible("CD".equals(t));
         });
 
         Button createBtn = new Button("Create Account");
@@ -853,24 +926,12 @@ public class ModernBankingApp extends Application {
                 String emAddr = employerAddressField.getText();
                 if (em == null || em.isEmpty() || emAddr == null || emAddr.isEmpty()) { showAlert("Error", "Employer info", "Provide employer name and address", false); return; }
                 ok = accountController.openChequeAccount(c, em, emAddr) != null;
-            } else if ("Money Market".equals(t)) {
-                double amt = 0;
-                try { amt = Double.parseDouble(initialDepositField.getText()); } catch (Exception ex) { showAlert("Error", "Invalid deposit", "Enter numeric initial deposit", false); return; }
-                ok = accountController.openMoneyMarketAccount(c, amt) != null;
-            } else if ("CD".equals(t)) {
-                double amt = 0;
-                int term = 12; // default
-                try { 
-                    amt = Double.parseDouble(initialDepositField.getText());
-                    try { term = Integer.parseInt(cdTermField.getText()); } catch (Exception ex) { }
-                } catch (Exception ex) { showAlert("Error", "Invalid deposit", "Enter numeric initial deposit", false); return; }
-                ok = accountController.openCertificateOfDepositAccount(c, amt, term) != null;
             }
             if (ok) showAlert("Success", "Account Created", "New account created successfully", true);
             else showAlert("Failure", "Could not create account", "Check input or constraints", false);
         });
 
-        contentPanel.getChildren().addAll(titleLabel, customerCombo, typeCombo, initialDepositField, employerField, employerAddressField, cdTermField, createBtn);
+        contentPanel.getChildren().addAll(titleLabel, customerCombo, typeCombo, initialDepositField, employerField, employerAddressField, createBtn);
         mainContainer.getChildren().addAll(headerBox, contentPanel);
 
         Scene scene = new Scene(mainContainer, 900, 500);
@@ -1006,7 +1067,49 @@ public class ModernBankingApp extends Application {
         createdColumn.setCellValueFactory(cellData -> 
             new javafx.beans.property.SimpleStringProperty(cellData.getValue().getDateOpened().toString()));
 
-        accountsTable.getColumns().addAll(accountNumColumn, typeColumn, balanceColumn, statusColumn, createdColumn);
+        TableColumn<Account, Void> accountActionColumn = new TableColumn<>("Action");
+        accountActionColumn.setPrefWidth(120);
+        accountActionColumn.setCellFactory(param -> new TableCell<Account, Void>() {
+            private final Button deleteBtn = new Button("Delete");
+            {
+                deleteBtn.setStyle("-fx-padding: 5; -fx-font-size: 11; -fx-background-color: #e74c3c; -fx-text-fill: white; -fx-cursor: hand;");
+                deleteBtn.setOnAction(e -> {
+                    Account acc = getTableView().getItems().get(getIndex());
+                    if (acc == null) return;
+                    Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+                    confirm.setTitle("Confirm Delete");
+                    confirm.setHeaderText("Delete Account: " + acc.getAccountId());
+                    confirm.setContentText("Are you sure you want to permanently delete this account?");
+                    java.util.Optional<javafx.scene.control.ButtonType> result = confirm.showAndWait();
+                    if (result.isPresent() && result.get() == javafx.scene.control.ButtonType.OK) {
+                        boolean ok = bank.deleteAccount(acc.getAccountId());
+                        if (ok) {
+                            getTableView().getItems().remove(acc);
+                            showAlert("Success", "Account Deleted", "Account has been deleted.", true);
+                            try {
+                                String actorId = currentUser != null ? currentUser.getUserId() : null;
+                                String actorEmail = currentUser != null ? currentUser.getUsername() : null;
+                                bank.logAction(actorId, actorEmail, "DELETE_ACCOUNT", "ACCOUNT", acc.getAccountId(), "Deleted account", "OK");
+                            } catch (Exception ex) {}
+                        } else {
+                            showAlert("Error", "Delete Failed", "Could not delete account.", false);
+                        }
+                    }
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getIndex() < 0 || getIndex() >= getTableView().getItems().size()) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(deleteBtn);
+                }
+            }
+        });
+
+        accountsTable.getColumns().addAll(accountNumColumn, typeColumn, balanceColumn, statusColumn, createdColumn, accountActionColumn);
 
         List<Account> allAccounts = bank.getAllAccounts();
         accountsTable.getItems().addAll(allAccounts);
@@ -1143,6 +1246,79 @@ public class ModernBankingApp extends Application {
 
         Scene scene = new Scene(mainContainer, 1000, 700);
         primaryStage.setTitle("Meridian Bank - System Statistics");
+        primaryStage.setScene(scene);
+    }
+
+    private void showAuditLogScreen() {
+        if (!requireRole(Role.ADMIN)) return;
+        VBox mainContainer = new VBox(12);
+        mainContainer.setPadding(new Insets(10));
+        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+
+        HBox header = new HBox(10);
+        header.setPadding(new Insets(15));
+        Label title = new Label("📝 SYSTEM AUDIT LOGS");
+        title.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #e74c3c;");
+        HBox spacer = new HBox(); HBox.setHgrow(spacer, Priority.ALWAYS);
+        Button back = new Button("← BACK");
+        back.setOnAction(e -> showAdminDashboard());
+        header.getChildren().addAll(title, spacer, back);
+
+        TextField searchField = new TextField();
+        searchField.setPromptText("Filter by actor, action or target...");
+        searchField.setStyle("-fx-padding: 8; -fx-background-color: #151a35; -fx-text-fill: #e0e0e0;");
+
+        TableView<com.banking.model.AuditLog> table = new TableView<>();
+        table.setStyle("-fx-background-color: #0f1433; -fx-text-fill: #e0e0e0;");
+
+        TableColumn<com.banking.model.AuditLog, String> tsCol = new TableColumn<>("Timestamp");
+        tsCol.setPrefWidth(180);
+        tsCol.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(cd.getValue().getTimestamp() != null ? cd.getValue().getTimestamp().toString() : ""));
+
+        TableColumn<com.banking.model.AuditLog, String> actorCol = new TableColumn<>("Actor");
+        actorCol.setPrefWidth(180);
+        actorCol.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty((cd.getValue().getActorEmail() != null ? cd.getValue().getActorEmail() : "") + (cd.getValue().getActorId() != null ? " (" + cd.getValue().getActorId() + ")" : "")));
+
+        TableColumn<com.banking.model.AuditLog, String> actionCol = new TableColumn<>("Action");
+        actionCol.setPrefWidth(140);
+        actionCol.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(cd.getValue().getActionType()));
+
+        TableColumn<com.banking.model.AuditLog, String> targetCol = new TableColumn<>("Target");
+        targetCol.setPrefWidth(140);
+        targetCol.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty((cd.getValue().getTargetType() != null ? cd.getValue().getTargetType() : "") + ": " + (cd.getValue().getTargetId() != null ? cd.getValue().getTargetId() : "")));
+
+        TableColumn<com.banking.model.AuditLog, String> statusCol = new TableColumn<>("Status");
+        statusCol.setPrefWidth(100);
+        statusCol.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(cd.getValue().getStatus()));
+
+        TableColumn<com.banking.model.AuditLog, String> detailsCol = new TableColumn<>("Details");
+        detailsCol.setPrefWidth(300);
+        detailsCol.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(cd.getValue().getDetails()));
+
+        table.getColumns().addAll(tsCol, actorCol, actionCol, targetCol, statusCol, detailsCol);
+
+        List<com.banking.model.AuditLog> logs = bank.getAuditLogs();
+        table.getItems().addAll(logs);
+
+        // Simple client-side filter
+        searchField.textProperty().addListener((obs, oldV, newV) -> {
+            String q = newV == null ? "" : newV.toLowerCase();
+            table.getItems().clear();
+            for (com.banking.model.AuditLog l : logs) {
+                if (l.getActorEmail() != null && l.getActorEmail().toLowerCase().contains(q) ||
+                    (l.getActionType() != null && l.getActionType().toLowerCase().contains(q)) ||
+                    (l.getTargetId() != null && l.getTargetId().toLowerCase().contains(q)) ||
+                    (l.getDetails() != null && l.getDetails().toLowerCase().contains(q))) {
+                    table.getItems().add(l);
+                }
+            }
+        });
+
+        VBox.setVgrow(table, Priority.ALWAYS);
+        mainContainer.getChildren().addAll(header, searchField, table);
+
+        Scene scene = new Scene(mainContainer, 1100, 600);
+        primaryStage.setTitle("Meridian Bank - Audit Logs");
         primaryStage.setScene(scene);
     }
 
@@ -1497,7 +1673,7 @@ public class ModernBankingApp extends Application {
         dialog.getDialogPane().setStyle("-fx-background-color: #0f1433; -fx-text-fill: #e0e0e0;");
 
         ComboBox<String> accountTypeCombo = new ComboBox<>();
-        accountTypeCombo.getItems().addAll("Checking", "Savings", "Money Market", "CD");
+        accountTypeCombo.getItems().addAll("Cheque", "Savings", "Investment");
         accountTypeCombo.setPrefWidth(250);
         accountTypeCombo.setStyle("-fx-padding: 10; -fx-font-size: 12; -fx-background-color: #151a35; " +
                 "-fx-text-fill: #e0e0e0; -fx-border-color: #00d4ff; -fx-border-width: 2; -fx-border-radius: 6;");
