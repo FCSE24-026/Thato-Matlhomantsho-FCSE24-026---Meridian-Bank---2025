@@ -175,18 +175,13 @@ public class LoginController {
                                            address != null ? address : "", 
                                            phone != null ? phone : "", 
                                            email, role);
-        // By default, require admin approval for regular customers
+        // By default, require admin approval for regular customers (except admin/teller)
         if (role == com.banking.main.Role.CUSTOMER) {
             newCustomer.setApproved(false);
         } else {
             newCustomer.setApproved(true);
         }
         bank.addCustomer(newCustomer);
-        if (role == com.banking.main.Role.CUSTOMER) {
-            System.out.println("✓ User registered successfully with ID: " + customerId + " (Role: " + role.getDisplayName() + ") - Pending admin approval");
-        } else {
-            System.out.println("✓ User registered successfully with ID: " + customerId + " (Role: " + role.getDisplayName() + ")");
-        }
         return true;
     }
 }

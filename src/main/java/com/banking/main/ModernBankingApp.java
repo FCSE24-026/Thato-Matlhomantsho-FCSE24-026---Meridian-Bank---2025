@@ -20,6 +20,7 @@ import com.banking.service.Bank;
 
 
 import java.util.List;
+import java.util.ArrayList;
 import java.time.format.DateTimeFormatter;
 
 public class ModernBankingApp extends Application {
@@ -46,11 +47,47 @@ public class ModernBankingApp extends Application {
     }
 
     private void initializeSeedData() {
-        // Create test users with different roles
-        authController.registerUser("Admin", "User", "admin@bank.com", "555-0001", "123 Admin St", Role.ADMIN);
-        authController.registerUser("Teller", "Smith", "teller@bank.com", "555-0002", "456 Teller Ave", Role.TELLER);
-        authController.registerUser("John", "Doe", "john.doe@bank.com", "555-0003", "789 Customer Rd", Role.CUSTOMER);
-        authController.registerUser("Jane", "Smith", "jane.smith@bank.com", "555-0004", "321 Client Lane", Role.CUSTOMER);
+        // Create minimal test users: Thato (Admin), Tellers, and Customers (idempotent)
+        // Phone format: 7[1-5]XXXXXX (Botswana mobile format)
+        String[] seedEmails = new String[] {"thato.matlhomantsho@bank.com", "teller1@bank.com", "teller2@bank.com", "naledi.customer@bank.com", "simone.customer@bank.com"};
+        String[] seedFirstNames = new String[] {"Thato", "Teller", "Teller", "Naledi", "Simone"};
+        String[] seedLastNames = new String[] {"Matlhomantsho", "One", "Two", "Mophatlhana", "Matsebela"};
+        String[] seedPhones = new String[] {"71456789", "72567890", "73678901", "74789012", "75890123"};
+        String[] seedPasswords = new String[] {"AdminPass123", "TellerPass123", "TellerPass456", "CustomerPass123", "CustomerPass456"};
+        java.util.Map<String, Role> seedRoles = new java.util.HashMap<>();
+        seedRoles.put("thato.matlhomantsho@bank.com", Role.ADMIN);
+        seedRoles.put("teller1@bank.com", Role.TELLER);
+        seedRoles.put("teller2@bank.com", Role.TELLER);
+        seedRoles.put("naledi.customer@bank.com", Role.CUSTOMER);
+        seedRoles.put("simone.customer@bank.com", Role.CUSTOMER);
+
+        System.out.println("\n========== MERIDIAN BANK - SEED USER LOGIN CREDENTIALS ==========");
+        System.out.println("ADMIN:\n");
+        for (int i = 0; i < seedEmails.length; i++) {
+            String email = seedEmails[i];
+            try {
+                com.banking.model.Customer existing = bank.getCustomerByEmail(email);
+                if (existing == null) {
+                    authController.registerUser(seedFirstNames[i], seedLastNames[i], email, seedPhones[i], "Meridian Bank Botswana", seedRoles.get(email));
+                    if (i == 0) System.out.println("  Email: " + email + " | Password: " + seedPasswords[i]);
+                } else {
+                    if (i == 0) System.out.println("  Email: " + email + " | Password: " + seedPasswords[i] + " (existing)");
+                }
+            } catch (Exception ex) {
+                System.out.println("⚠ Seed user creation failed for " + email + ": " + ex.getMessage());
+            }
+        }
+        System.out.println("\nTELLERS:\n");
+        for (int i = 1; i <= 2; i++) {
+            String email = seedEmails[i];
+            System.out.println("  Email: " + email + " | Password: " + seedPasswords[i]);
+        }
+        System.out.println("\nCUSTOMERS:\n");
+        for (int i = 3; i < seedEmails.length; i++) {
+            String email = seedEmails[i];
+            System.out.println("  Email: " + email + " | Password: " + seedPasswords[i]);
+        }
+        System.out.println("\n====================================================================\n");
         // Ensure seeded administrative users have correct roles (fix existing DB rows from older runs)
         try {
             com.banking.model.Customer admin = bank.getCustomerByEmail("admin@bank.com");
@@ -71,16 +108,32 @@ public class ModernBankingApp extends Application {
             System.out.println("⚠ Seed role correction skipped: " + ex.getMessage());
         }
         
-        // Create default accounts for seeded customers
+        // Create default accounts for seeded customers only if they don't already have accounts
         try {
             com.banking.model.Customer john = bank.getCustomerByEmail("john.doe@bank.com");
             com.banking.model.Customer jane = bank.getCustomerByEmail("jane.smith@bank.com");
+
             if (john != null) {
-                accountController.openSavingsAccount(john);
-                accountController.openInvestmentAccount(john, 1000.0);
+                List<Account> johnAccounts = bank.getAllAccountsForCustomer(john.getCustomerId());
+                if (johnAccounts == null || johnAccounts.isEmpty()) {
+                    Account a1 = accountController.openSavingsAccount(john);
+                    Account a2 = accountController.openInvestmentAccount(john, 1000.0);
+                    System.out.println("✓ Seed accounts created for John: " + (a1 != null ? a1.getAccountId() : "n/a") + ", " + (a2 != null ? a2.getAccountId() : "n/a"));
+                } else {
+                    System.out.println("✓ John already has accounts: ");
+                    for (Account a : johnAccounts) System.out.println("   - " + a.getAccountId() + " (" + a.getAccountType() + ")");
+                }
             }
+
             if (jane != null) {
-                accountController.openSavingsAccount(jane);
+                List<Account> janeAccounts = bank.getAllAccountsForCustomer(jane.getCustomerId());
+                if (janeAccounts == null || janeAccounts.isEmpty()) {
+                    Account a = accountController.openSavingsAccount(jane);
+                    System.out.println("✓ Seed account created for Jane: " + (a != null ? a.getAccountId() : "n/a"));
+                } else {
+                    System.out.println("✓ Jane already has accounts: ");
+                    for (Account a : janeAccounts) System.out.println("   - " + a.getAccountId() + " (" + a.getAccountType() + ")");
+                }
             }
         } catch (Exception ex) {
             System.out.println("⚠ Seed account creation error: " + ex.getMessage());
@@ -93,49 +146,49 @@ public class ModernBankingApp extends Application {
         VBox mainContainer = new VBox(20);
         mainContainer.setPadding(new Insets(60, 100, 60, 100));
         mainContainer.setAlignment(Pos.CENTER);
-        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+        mainContainer.setStyle("-fx-background-color: #ffffff;");
 
         Label titleLabel = new Label("Meridian Bank");
-        titleLabel.setStyle("-fx-font-size: 48; -fx-font-weight: bold; -fx-text-fill: #00d4ff;");
+        titleLabel.setStyle("-fx-font-size: 48; -fx-font-weight: bold; -fx-text-fill: #000000;");
         
         Label subtitleLabel = new Label("Banking System");
-        subtitleLabel.setStyle("-fx-font-size: 16; -fx-text-fill: #888; -fx-letter-spacing: 2;");
+        subtitleLabel.setStyle("-fx-font-size: 16; -fx-text-fill: #666666; -fx-letter-spacing: 2;");
 
         Separator sep1 = new Separator();
-        sep1.setStyle("-fx-border-color: rgba(0,212,255,0.3); -fx-border-width: 1;");
+        sep1.setStyle("-fx-border-color: rgba(0,0,0,0.2); -fx-border-width: 1;");
 
         VBox formBox = new VBox(15);
-        formBox.setStyle("-fx-background-color: #0f1433; -fx-border-color: #00d4ff; " +
+        formBox.setStyle("-fx-background-color: #ffffff; -fx-border-color: #cccccc; " +
                 "-fx-border-width: 1; -fx-border-radius: 8; -fx-padding: 40; " +
-                "-fx-effect: dropshadow(gaussian, rgba(0,212,255,0.15), 10, 0, 0, 2);");
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 10, 0, 0, 2);");
 
         Label formTitleLabel = new Label("Secure Access");
-        formTitleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #00d4ff;");
+        formTitleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #000000;");
 
         Label usernameLabel = new Label("USERNAME");
-        usernameLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #888; -fx-letter-spacing: 1;");
+        usernameLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #666666; -fx-letter-spacing: 1;");
 
         TextField usernameField = new TextField();
         usernameField.setPromptText("Enter your username");
-        usernameField.setStyle("-fx-padding: 12; -fx-font-size: 12; -fx-background-color: #151a35; " +
-                "-fx-text-fill: #e0e0e0; -fx-control-inner-background: #151a35; -fx-border-color: #00d4ff; " +
+        usernameField.setStyle("-fx-padding: 12; -fx-font-size: 12; -fx-background-color: #ffffff; " +
+                "-fx-text-fill: #1a1a1a; -fx-control-inner-background: #ffffff; -fx-border-color: #cccccc; " +
                 "-fx-border-width: 2; -fx-border-radius: 6;");
         usernameField.setPrefWidth(300);
 
         Label passwordLabel = new Label("PASSWORD");
-        passwordLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #888; -fx-letter-spacing: 1;");
+        passwordLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #666666; -fx-letter-spacing: 1;");
 
         PasswordField passwordField = new PasswordField();
         passwordField.setPromptText("Enter your password");
-        passwordField.setStyle("-fx-padding: 12; -fx-font-size: 12; -fx-background-color: #151a35; " +
-                "-fx-text-fill: #e0e0e0; -fx-control-inner-background: #151a35; -fx-border-color: #00d4ff; " +
+        passwordField.setStyle("-fx-padding: 12; -fx-font-size: 12; -fx-background-color: #ffffff; " +
+                "-fx-text-fill: #1a1a1a; -fx-control-inner-background: #ffffff; -fx-border-color: #cccccc; " +
                 "-fx-border-width: 2; -fx-border-radius: 6;");
         passwordField.setPrefWidth(300);
 
         Label messageLabel = new Label();
         messageLabel.setWrapText(true);
         messageLabel.setPrefWidth(300);
-        messageLabel.setStyle("-fx-font-size: 11; -fx-padding: 10; -fx-background-color: rgba(0,0,0,0.3); -fx-border-radius: 4;");
+        messageLabel.setStyle("-fx-font-size: 11; -fx-padding: 10; -fx-background-color: rgba(0,0,0,0.05); -fx-border-radius: 4;");
 
         HBox buttonBox = new HBox(15);
         buttonBox.setAlignment(Pos.CENTER);
@@ -144,15 +197,15 @@ public class ModernBankingApp extends Application {
         loginButton.setPrefWidth(140);
         loginButton.setPrefHeight(45);
         loginButton.setStyle("-fx-padding: 0; -fx-font-size: 13; -fx-font-weight: bold; " +
-                "-fx-background-color: linear-gradient(to right, #00d4ff, #0099cc); " +
+                "-fx-background-color: linear-gradient(to right, #000000, #1a1a1a); " +
                 "-fx-text-fill: white; -fx-border-radius: 6; -fx-cursor: hand;");
 
         Button registerButton = new Button("SIGN UP");
         registerButton.setPrefWidth(140);
         registerButton.setPrefHeight(45);
         registerButton.setStyle("-fx-padding: 0; -fx-font-size: 13; -fx-font-weight: bold; " +
-                "-fx-background-color: #1a1f3a; -fx-text-fill: #00d4ff; " +
-                "-fx-border-color: #00d4ff; -fx-border-width: 2; -fx-border-radius: 6; -fx-cursor: hand;");
+                "-fx-background-color: #f5f5f5; -fx-text-fill: #000000; " +
+                "-fx-border-color: #cccccc; -fx-border-width: 2; -fx-border-radius: 6; -fx-cursor: hand;");
 
         loginButton.setOnAction(e -> {
             String username = usernameField.getText().trim();
@@ -160,8 +213,12 @@ public class ModernBankingApp extends Application {
 
             if (username.isEmpty() || password.isEmpty()) {
                 messageLabel.setText("⚠ Please fill in all fields");
-                messageLabel.setStyle("-fx-text-fill: #f39c12; -fx-font-size: 11; -fx-padding: 10; " +
-                        "-fx-background-color: rgba(243,156,18,0.1); -fx-border-radius: 4;");
+                messageLabel.setStyle("-fx-text-fill: #f57c00; -fx-font-size: 11; -fx-padding: 10; " +
+                        "-fx-background-color: rgba(245,124,0,0.1); -fx-border-radius: 4;");
+            } else if (password.length() < 6) {
+                messageLabel.setText("⚠ Password must be at least 6 characters");
+                messageLabel.setStyle("-fx-text-fill: #f57c00; -fx-font-size: 11; -fx-padding: 10; " +
+                        "-fx-background-color: rgba(245,124,0,0.1); -fx-border-radius: 4;");
             } else if (authController.authenticateUser(username, password)) {
                 currentUser = authController.getUserByUsername(username);
                 System.out.println("[UI] Logged in user: " + (currentUser != null ? currentUser.getUsername() + " role=" + currentUser.getRole() : "null"));
@@ -169,13 +226,13 @@ public class ModernBankingApp extends Application {
                     showDashboard();
                 } else {
                     messageLabel.setText("✗ Error retrieving user information");
-                    messageLabel.setStyle("-fx-text-fill: #e74c3c; -fx-font-size: 11; -fx-padding: 10; " +
-                            "-fx-background-color: rgba(231,76,60,0.1); -fx-border-radius: 4;");
+                    messageLabel.setStyle("-fx-text-fill: #d32f2f; -fx-font-size: 11; -fx-padding: 10; " +
+                            "-fx-background-color: rgba(211,47,47,0.1); -fx-border-radius: 4;");
                 }
             } else {
                 messageLabel.setText("✗ Invalid username or password");
-                messageLabel.setStyle("-fx-text-fill: #e74c3c; -fx-font-size: 11; -fx-padding: 10; " +
-                        "-fx-background-color: rgba(231,76,60,0.1); -fx-border-radius: 4;");
+                messageLabel.setStyle("-fx-text-fill: #d32f2f; -fx-font-size: 11; -fx-padding: 10; " +
+                        "-fx-background-color: rgba(211,47,47,0.1); -fx-border-radius: 4;");
                 passwordField.clear();
             }
         });
@@ -194,7 +251,7 @@ public class ModernBankingApp extends Application {
         mainContainer.getChildren().addAll(titleLabel, subtitleLabel, sep1, formBox);
 
         Scene scene = new Scene(mainContainer, 700, 700);
-        primaryStage.setTitle("FLECA - Banking System");
+        primaryStage.setTitle("MERIDIAN BANK - Professional Banking System");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -214,20 +271,20 @@ public class ModernBankingApp extends Application {
     private void showRegisterScreen() {
         VBox mainContainer = new VBox(15);
         mainContainer.setPadding(new Insets(40));
-        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+        mainContainer.setStyle("-fx-background-color: #ffffff;");
 
         Label titleLabel = new Label("CREATE ACCOUNT");
-        titleLabel.setStyle("-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #00d4ff;");
+        titleLabel.setStyle("-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #000000;");
 
         VBox formBox = new VBox(12);
-        formBox.setStyle("-fx-background-color: #0f1433; -fx-border-color: #00d4ff; " +
+        formBox.setStyle("-fx-background-color: #ffffff; -fx-border-color: #cccccc; " +
                 "-fx-border-width: 1; -fx-border-radius: 8; -fx-padding: 30; " +
-                "-fx-effect: dropshadow(gaussian, rgba(0,212,255,0.15), 10, 0, 0, 2);");
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 10, 0, 0, 2)");
 
     TextField firstNameField = createStyledTextField("First name");
     TextField lastNameField = createStyledTextField("Last name");
     TextField usernameField = createStyledTextField("Choose username");
-    PasswordField passwordField = createStyledPasswordField("Enter password");
+    PasswordField passwordField = createStyledPasswordField("Enter password (min 6 chars)");
     PasswordField confirmField = createStyledPasswordField("Confirm password");
     TextField emailField = createStyledTextField("Enter email address");
     TextField phoneField = createStyledTextField("Enter phone number");
@@ -252,7 +309,19 @@ public class ModernBankingApp extends Application {
                 "-fx-border-color: #00d4ff; -fx-border-width: 2; -fx-border-radius: 6; -fx-cursor: hand;");
 
     signupButton.setOnAction(e -> {
-        if (authController.registerUser(
+        String pwd = passwordField.getText();
+        String confirmPwd = confirmField.getText();
+        String pwd_err = com.banking.util.PasswordUtil.getPasswordValidationError(pwd);
+        
+        if (pwd_err != null) {
+            messageLabel.setText("✗ " + pwd_err);
+            messageLabel.setStyle("-fx-text-fill: #e74c3c; -fx-font-size: 11; -fx-padding: 10; " +
+                    "-fx-background-color: rgba(231,76,60,0.1); -fx-border-radius: 4;");
+        } else if (!pwd.equals(confirmPwd)) {
+            messageLabel.setText("✗ Passwords do not match");
+            messageLabel.setStyle("-fx-text-fill: #e74c3c; -fx-font-size: 11; -fx-padding: 10; " +
+                    "-fx-background-color: rgba(231,76,60,0.1); -fx-border-radius: 4;");
+        } else if (authController.registerUser(
             firstNameField.getText().trim(),
             lastNameField.getText().trim(),
             emailField.getText().trim(),
@@ -394,7 +463,14 @@ public class ModernBankingApp extends Application {
             "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
         auditLogButton.setOnAction(e -> showAuditLogScreen());
 
-        buttonRowBox.getChildren().addAll(viewUsersButton, approveRegistrationsButton, manageAccountsButton, systemStatsButton, auditLogButton);
+        Button createTellerButton = new Button("➕ CREATE TELLER");
+        createTellerButton.setPrefWidth(180);
+        createTellerButton.setPrefHeight(50);
+        createTellerButton.setStyle("-fx-background-color: linear-gradient(to right, #2980b9, #1f618d); " +
+            "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
+        createTellerButton.setOnAction(e -> showCreateTellerScreen());
+
+        buttonRowBox.getChildren().addAll(viewUsersButton, approveRegistrationsButton, manageAccountsButton, systemStatsButton, auditLogButton, createTellerButton);
         contentPanel.getChildren().addAll(titleLabel, buttonRowBox);
 
         mainContainer.getChildren().addAll(headerBox, contentPanel);
@@ -534,6 +610,15 @@ public class ModernBankingApp extends Application {
         roleColumn.setCellValueFactory(cellData -> 
             new javafx.beans.property.SimpleStringProperty(cellData.getValue().getRole() != null ? cellData.getValue().getRole().getDisplayName() : "N/A"));
 
+        TableColumn<Customer, String> accountsColumn = new TableColumn<>("Accounts");
+        accountsColumn.setPrefWidth(300);
+        accountsColumn.setCellValueFactory(cellData -> {
+            Customer c = cellData.getValue();
+            List<Account> accts = bank.getAllAccountsForCustomer(c.getCustomerId());
+            String joined = accts == null || accts.isEmpty() ? "-" : String.join(", ", accts.stream().map(a -> a.getAccountId()).toArray(String[]::new));
+            return new javafx.beans.property.SimpleStringProperty(joined);
+        });
+
         TableColumn<Customer, Void> userActionColumn = new TableColumn<>("Action");
         userActionColumn.setPrefWidth(140);
         userActionColumn.setCellFactory(param -> new TableCell<Customer, Void>() {
@@ -581,7 +666,7 @@ public class ModernBankingApp extends Application {
             }
         });
 
-        usersTable.getColumns().addAll(nameColumn, emailColumn, phoneColumn, addressColumn, roleColumn, userActionColumn);
+        usersTable.getColumns().addAll(nameColumn, emailColumn, phoneColumn, addressColumn, roleColumn, accountsColumn, userActionColumn);
 
         List<Customer> allCustomers = bank.getAllCustomers();
         usersTable.getItems().addAll(allCustomers);
@@ -783,20 +868,111 @@ public class ModernBankingApp extends Application {
         TextField amountField = new TextField();
         amountField.setPromptText("Amount (BWP)");
 
+        // Target account selection: allow searching by customer name/email and show owner info
+        TextField searchTargetField = new TextField();
+        searchTargetField.setPromptText("Search target by customer name or email");
+        searchTargetField.setStyle("-fx-padding: 8; -fx-background-color: #151a35; -fx-text-fill: #e0e0e0;");
+
         ComboBox<Account> targetAccountCombo = new ComboBox<>();
         targetAccountCombo.setPromptText("Target Account (for Transfer)");
         targetAccountCombo.setConverter(new javafx.util.StringConverter<Account>(){
-            @Override public String toString(Account a) { return a == null ? "" : a.getAccountId() + " - BWP " + String.format("%.2f", a.getBalance()); }
+            @Override public String toString(Account a) {
+                if (a == null) return "";
+                String owner = "Unknown";
+                try {
+                    com.banking.model.Customer ownerCust = a.getCustomer();
+                    if (ownerCust != null) owner = ownerCust.getFirstName() + " " + ownerCust.getSurname() + " (" + ownerCust.getEmail() + ")";
+                } catch (Exception ex) {}
+                return a.getAccountId() + " - " + owner + " - BWP " + String.format("%.2f", a.getBalance());
+            }
             @Override public Account fromString(String string) { return null; }
         });
         targetAccountCombo.setVisible(false);
+
+        // Helper to populate target accounts list (optionally filtered by query)
+        // NOTE: allow same-customer accounts (so transfers between a customer's own accounts are possible)
+        // but exclude the currently-selected source account to avoid transferring into the same account.
+        java.util.function.Consumer<String> populateTargets = (query) -> {
+            List<Account> all = bank.getAllAccounts();
+            Account sourceAccount = accountCombo.getValue();
+            if (query == null || query.trim().isEmpty()) {
+                if (sourceAccount == null) {
+                    targetAccountCombo.getItems().setAll(all);
+                } else {
+                    List<Account> filtered = new ArrayList<>();
+                    for (Account a : all) {
+                        if (a.getAccountId() != null && sourceAccount.getAccountId() != null && a.getAccountId().equals(sourceAccount.getAccountId())) continue;
+                        filtered.add(a);
+                    }
+                    targetAccountCombo.getItems().setAll(filtered);
+                }
+            } else {
+                String q = query.toLowerCase();
+                List<Account> filtered = new ArrayList<>();
+                for (Account a : all) {
+                    com.banking.model.Customer c = a.getCustomer();
+                    String name = c == null ? "" : (c.getFirstName() + " " + c.getSurname()).toLowerCase();
+                    String email = c == null ? "" : (c.getEmail() == null ? "" : c.getEmail().toLowerCase());
+                    if (name.contains(q) || email.contains(q) || a.getAccountId().toLowerCase().contains(q)) {
+                        if (sourceAccount != null && a.getAccountId() != null && a.getAccountId().equals(sourceAccount.getAccountId())) continue;
+                        filtered.add(a);
+                    }
+                }
+                targetAccountCombo.getItems().setAll(filtered);
+            }
+        };
+
+        // Initialize with full list
+        populateTargets.accept("");
+
+        // Small owner preview panel for the selected target account
+        VBox ownerPreview = new VBox(4);
+        ownerPreview.setStyle("-fx-background-color: #0f1433; -fx-border-color: #00d4ff; -fx-border-width: 1; -fx-padding: 10; -fx-border-radius: 6;");
+        ownerPreview.setVisible(false);
+        Label ownerTitle = new Label("Target Owner");
+        ownerTitle.setStyle("-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: #00d4ff;");
+        Label ownerNameLabel = new Label("");
+        ownerNameLabel.setStyle("-fx-text-fill: #e0e0e0;");
+        Label ownerEmailLabel = new Label("");
+        ownerEmailLabel.setStyle("-fx-text-fill: #e0e0e0;");
+        Label ownerIdLabel = new Label("");
+        ownerIdLabel.setStyle("-fx-text-fill: #e0e0e0;");
+        Label ownerPhoneLabel = new Label("");
+        ownerPhoneLabel.setStyle("-fx-text-fill: #e0e0e0;");
+        ownerPreview.getChildren().addAll(ownerTitle, ownerNameLabel, ownerEmailLabel, ownerIdLabel, ownerPhoneLabel);
+
+        // Filter as user types
+        searchTargetField.textProperty().addListener((obs, oldV, newV) -> populateTargets.accept(newV));
+
+        // Update owner preview when target account changes
+        targetAccountCombo.valueProperty().addListener((obs, oldA, newA) -> {
+            if (newA == null) {
+                ownerPreview.setVisible(false);
+                ownerNameLabel.setText(""); ownerEmailLabel.setText(""); ownerIdLabel.setText(""); ownerPhoneLabel.setText("");
+            } else {
+                com.banking.model.Customer oc = newA.getCustomer();
+                if (oc != null) {
+                    ownerNameLabel.setText("Name: " + oc.getFirstName() + " " + oc.getSurname());
+                    ownerEmailLabel.setText("Email: " + oc.getEmail());
+                    ownerIdLabel.setText("Customer ID: " + oc.getCustomerId());
+                    ownerPhoneLabel.setText("Phone: " + (oc.getPhoneNumber() == null ? "-" : oc.getPhoneNumber()));
+                } else {
+                    ownerNameLabel.setText("Name: Unknown");
+                    ownerEmailLabel.setText("Email: -");
+                    ownerIdLabel.setText("Customer ID: -");
+                    ownerPhoneLabel.setText("Phone: -");
+                }
+                ownerPreview.setVisible(true);
+            }
+        });
 
         customerCombo.setOnAction(e -> {
             Customer sel = customerCombo.getValue();
             accountCombo.getItems().clear();
             if (sel != null) accountCombo.getItems().addAll(accountController.getCustomerAccounts(sel));
-            targetAccountCombo.getItems().clear();
-            targetAccountCombo.getItems().addAll(bank.getAllAccounts());
+            // when a customer is selected, pre-filter the target list to exclude their own accounts
+            searchTargetField.clear();
+            populateTargets.accept("");
         });
 
         opCombo.setOnAction(e -> {
@@ -823,17 +999,24 @@ public class ModernBankingApp extends Application {
             } else if ("Transfer".equals(op)) {
                 Account target = targetAccountCombo.getValue();
                 if (target == null) { showAlert("Error", "Missing target", "Select a target account for transfer", false); return; }
+                // Prevent transferring into the exact same account
+                if (acc.getAccountId() != null && acc.getAccountId().equals(target.getAccountId())) {
+                    showAlert("Error", "Invalid target", "Cannot transfer into the same account", false);
+                    return;
+                }
                 success = accountController.transferFunds(acc.getAccountId(), target.getAccountId(), amt, "Teller transfer");
             }
 
             if (success) {
                 showAlert("Success", "Transaction Completed", "Operation successful", true);
+                try { Thread.sleep(1000); } catch (InterruptedException ex) {}
+                showTellerDashboard();
             } else {
                 showAlert("Failure", "Transaction Failed", "Operation could not be completed", false);
             }
         });
 
-        contentPanel.getChildren().addAll(titleLabel, customerCombo, accountCombo, opCombo, amountField, targetAccountCombo, submitBtn);
+        contentPanel.getChildren().addAll(titleLabel, customerCombo, accountCombo, opCombo, amountField, searchTargetField, targetAccountCombo, ownerPreview, submitBtn);
         mainContainer.getChildren().addAll(headerBox, contentPanel);
 
         Scene scene = new Scene(mainContainer, 900, 500);
@@ -1341,6 +1524,128 @@ public class ModernBankingApp extends Application {
         return card;
     }
 
+    private void showCreateTellerScreen() {
+        if (!requireRole(Role.ADMIN)) return;
+        VBox mainContainer = new VBox(15);
+        mainContainer.setPadding(new Insets(0));
+        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+
+        HBox headerBox = new HBox(20);
+        headerBox.setPadding(new Insets(25));
+        headerBox.setStyle("-fx-background-color: linear-gradient(to right, #2980b9, #1f618d); " +
+                "-fx-border-color: #2980b9; -fx-border-width: 0 0 2 0;");
+        headerBox.setAlignment(Pos.CENTER_LEFT);
+
+        Label titleLabel = new Label("➕ CREATE NEW TELLER ACCOUNT");
+        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #2980b9;");
+
+        HBox spacer = new HBox();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button backButton = new Button("← BACK");
+        backButton.setPrefWidth(100);
+        backButton.setPrefHeight(40);
+        backButton.setStyle("-fx-background-color: linear-gradient(to right, #2980b9, #1f618d); " +
+                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
+        backButton.setOnAction(e -> showAdminDashboard());
+
+        headerBox.getChildren().addAll(titleLabel, spacer, backButton);
+
+        VBox contentPanel = new VBox(12);
+        contentPanel.setPadding(new Insets(30));
+        contentPanel.setStyle("-fx-background-color: #0a0e27;");
+
+        TextField firstNameField = createStyledTextField("First Name");
+        TextField lastNameField = createStyledTextField("Last Name");
+        TextField emailField = createStyledTextField("Email Address");
+        TextField phoneField = createStyledTextField("Phone Number (7[1-5]XXXXXX)");
+        PasswordField passwordField = createStyledPasswordField("Password (min 6 chars)");
+        PasswordField confirmPasswordField = createStyledPasswordField("Confirm Password");
+
+        Label messageLabel = new Label();
+        messageLabel.setWrapText(true);
+        messageLabel.setStyle("-fx-font-size: 11; -fx-padding: 10; -fx-background-color: rgba(0,0,0,0.3); -fx-border-radius: 4;");
+
+        HBox buttonBox = new HBox(15);
+        buttonBox.setAlignment(Pos.CENTER);
+
+        Button createButton = new Button("CREATE TELLER");
+        createButton.setPrefWidth(150);
+        createButton.setPrefHeight(40);
+        createButton.setStyle("-fx-background-color: linear-gradient(to right, #2980b9, #1f618d); " +
+                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
+
+        Button cancelButton = new Button("CANCEL");
+        cancelButton.setPrefWidth(150);
+        cancelButton.setPrefHeight(40);
+        cancelButton.setStyle("-fx-background-color: #1a1f3a; -fx-text-fill: #2980b9; " +
+                "-fx-border-color: #2980b9; -fx-border-width: 2; -fx-border-radius: 6; -fx-cursor: hand;");
+
+        createButton.setOnAction(e -> {
+            String firstName = firstNameField.getText().trim();
+            String lastName = lastNameField.getText().trim();
+            String email = emailField.getText().trim();
+            String phone = phoneField.getText().trim();
+            String pwd = passwordField.getText();
+            String confirmPwd = confirmPasswordField.getText();
+
+            if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty() || phone.isEmpty()) {
+                messageLabel.setText("⚠ All fields are required");
+                messageLabel.setStyle("-fx-text-fill: #f39c12; -fx-padding: 10; -fx-background-color: rgba(243,156,18,0.1);");
+                return;
+            }
+
+            String pwd_err = com.banking.util.PasswordUtil.getPasswordValidationError(pwd);
+            if (pwd_err != null) {
+                messageLabel.setText("✗ " + pwd_err);
+                messageLabel.setStyle("-fx-text-fill: #e74c3c; -fx-padding: 10; -fx-background-color: rgba(231,76,60,0.1);");
+                return;
+            }
+
+            if (!pwd.equals(confirmPwd)) {
+                messageLabel.setText("✗ Passwords do not match");
+                messageLabel.setStyle("-fx-text-fill: #e74c3c; -fx-padding: 10; -fx-background-color: rgba(231,76,60,0.1);");
+                return;
+            }
+
+            if (authController.registerUser(firstName, lastName, email, phone, "Meridian Bank Botswana", Role.TELLER)) {
+                messageLabel.setText("✓ Teller account created successfully!");
+                messageLabel.setStyle("-fx-text-fill: #1abc9c; -fx-padding: 10; -fx-background-color: rgba(26,188,156,0.1);");
+                firstNameField.clear();
+                lastNameField.clear();
+                emailField.clear();
+                phoneField.clear();
+                passwordField.clear();
+                confirmPasswordField.clear();
+                try { Thread.sleep(1500); } catch (InterruptedException ex) {}
+                showAdminDashboard();
+            } else {
+                messageLabel.setText("✗ Failed to create teller. Email may already exist.");
+                messageLabel.setStyle("-fx-text-fill: #e74c3c; -fx-padding: 10; -fx-background-color: rgba(231,76,60,0.1);");
+            }
+        });
+
+        cancelButton.setOnAction(e -> showAdminDashboard());
+
+        buttonBox.getChildren().addAll(createButton, cancelButton);
+
+        contentPanel.getChildren().addAll(
+            createStyledLabel("FIRST NAME"), firstNameField,
+            createStyledLabel("LAST NAME"), lastNameField,
+            createStyledLabel("EMAIL"), emailField,
+            createStyledLabel("PHONE"), phoneField,
+            createStyledLabel("PASSWORD"), passwordField,
+            createStyledLabel("CONFIRM PASSWORD"), confirmPasswordField,
+            messageLabel, buttonBox
+        );
+
+        mainContainer.getChildren().addAll(headerBox, contentPanel);
+
+        Scene scene = new Scene(mainContainer, 700, 750);
+        primaryStage.setTitle("Meridian Bank - Create Teller");
+        primaryStage.setScene(scene);
+    }
+
     private void showCustomerDashboard() {
         if (!requireRole(Role.CUSTOMER)) return;
         VBox mainContainer = new VBox(15);
@@ -1550,7 +1855,7 @@ public class ModernBankingApp extends Application {
                 } else if (amount <= 0) {
                     messageLabel.setText("⚠ Amount must be greater than 0");
                     messageLabel.setStyle("-fx-text-fill: #f39c12;");
-                } else if (fromAccount.getAccountId() == toAccount.getAccountId()) {
+                } else if (fromAccount.getAccountId() != null && fromAccount.getAccountId().equals(toAccount.getAccountId())) {
                     messageLabel.setText("⚠ Cannot transfer to the same account");
                     messageLabel.setStyle("-fx-text-fill: #f39c12;");
         } else if (accountController.transferFunds(
@@ -1559,10 +1864,12 @@ public class ModernBankingApp extends Application {
             toAccount.getAccountId(),
             amount,
             description)) {
-                    messageLabel.setText("✓ Transfer successful!");
+                    messageLabel.setText("✓ Transfer successful! Returning to dashboard...");
                     messageLabel.setStyle("-fx-text-fill: #1abc9c;");
                     amountField.clear();
                     descriptionField.clear();
+                    try { Thread.sleep(1500); } catch (InterruptedException ex) {}
+                    showDashboard();
                 } else {
                     messageLabel.setText("✗ Transfer failed. Insufficient balance?");
                     messageLabel.setStyle("-fx-text-fill: #e74c3c;");
@@ -1719,8 +2026,8 @@ public class ModernBankingApp extends Application {
     private TextField createStyledTextField(String prompt) {
         TextField field = new TextField();
         field.setPromptText(prompt);
-        field.setStyle("-fx-padding: 12; -fx-font-size: 12; -fx-background-color: #151a35; " +
-                "-fx-text-fill: #e0e0e0; -fx-control-inner-background: #151a35; -fx-border-color: #00d4ff; " +
+        field.setStyle("-fx-padding: 12; -fx-font-size: 12; -fx-background-color: #ffffff; " +
+                "-fx-text-fill: #1a1a1a; -fx-control-inner-background: #ffffff; -fx-border-color: #cccccc; " +
                 "-fx-border-width: 2; -fx-border-radius: 6;");
         field.setPrefWidth(300);
         return field;
@@ -1729,8 +2036,8 @@ public class ModernBankingApp extends Application {
     private PasswordField createStyledPasswordField(String prompt) {
         PasswordField field = new PasswordField();
         field.setPromptText(prompt);
-        field.setStyle("-fx-padding: 12; -fx-font-size: 12; -fx-background-color: #151a35; " +
-                "-fx-text-fill: #e0e0e0; -fx-control-inner-background: #151a35; -fx-border-color: #00d4ff; " +
+        field.setStyle("-fx-padding: 12; -fx-font-size: 12; -fx-background-color: #ffffff; " +
+                "-fx-text-fill: #1a1a1a; -fx-control-inner-background: #ffffff; -fx-border-color: #cccccc; " +
                 "-fx-border-width: 2; -fx-border-radius: 6;");
         field.setPrefWidth(300);
         return field;
@@ -1738,7 +2045,7 @@ public class ModernBankingApp extends Application {
 
     private Label createStyledLabel(String text) {
         Label label = new Label(text);
-        label.setStyle("-fx-font-size: 11; -fx-text-fill: #888; -fx-letter-spacing: 1;");
+        label.setStyle("-fx-font-size: 11; -fx-text-fill: #666666; -fx-letter-spacing: 1;");
         return label;
     }
 

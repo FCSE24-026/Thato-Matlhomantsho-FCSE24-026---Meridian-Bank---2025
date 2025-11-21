@@ -71,8 +71,11 @@ public class ApplicationView extends Application {
         
         // Create scene
         Scene scene = new Scene(tabPane, 800, 600);
+        // Load CSS stylesheet
+        String cssResource = getClass().getResource("/banking-style.css").toExternalForm();
+        scene.getStylesheets().add(cssResource);
         
-        stage.setTitle("Meridian Banking System - Task 5 View Layer");
+        stage.setTitle("MERIDIAN BANK - Professional Banking System");
         stage.setScene(scene);
         stage.show();
     }

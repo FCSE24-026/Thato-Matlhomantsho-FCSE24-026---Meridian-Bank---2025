@@ -33,4 +33,35 @@ public class PasswordUtil {
         // For development: simple verification
         return hashPassword(plainPassword).equals(hashedPassword);
     }
+
+    /**
+     * Validate password strength.
+     * Requirements: at least 6 characters.
+     * @param password The plain-text password to validate
+     * @return true if password meets requirements, false otherwise
+     */
+    public static boolean validatePasswordStrength(String password) {
+        if (password == null || password.isEmpty()) {
+            return false;
+        }
+        if (password.length() < 6) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Get password validation error message (for UI feedback)
+     * @param password The plain-text password to validate
+     * @return Error message, or null if password is valid
+     */
+    public static String getPasswordValidationError(String password) {
+        if (password == null || password.isEmpty()) {
+            return "Password cannot be empty";
+        }
+        if (password.length() < 6) {
+            return "Password must be at least 6 characters long";
+        }
+        return null;
+    }
 }
