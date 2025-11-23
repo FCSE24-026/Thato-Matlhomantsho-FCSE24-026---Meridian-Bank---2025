@@ -197,7 +197,7 @@ public class ModernBankingApp extends Application {
         loginButton.setPrefWidth(140);
         loginButton.setPrefHeight(45);
         loginButton.setStyle("-fx-padding: 0; -fx-font-size: 13; -fx-font-weight: bold; " +
-                "-fx-background-color: linear-gradient(to right, #000000, #1a1a1a); " +
+                "-fx-background-color: #000000; " +
                 "-fx-text-fill: white; -fx-border-radius: 6; -fx-cursor: hand;");
 
         Button registerButton = new Button("SIGN UP");
@@ -299,14 +299,14 @@ public class ModernBankingApp extends Application {
         Button signupButton = new Button("CREATE ACCOUNT");
         signupButton.setPrefWidth(150);
         signupButton.setPrefHeight(40);
-        signupButton.setStyle("-fx-background-color: linear-gradient(to right, #1abc9c, #16a085); " +
+        signupButton.setStyle("-fx-background-color: #000000; " +
                 "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
 
         Button backButton = new Button("BACK");
         backButton.setPrefWidth(150);
         backButton.setPrefHeight(40);
-        backButton.setStyle("-fx-background-color: #1a1f3a; -fx-text-fill: #00d4ff; " +
-                "-fx-border-color: #00d4ff; -fx-border-width: 2; -fx-border-radius: 6; -fx-cursor: hand;");
+        backButton.setStyle("-fx-background-color: #1a1f3a; -fx-text-fill: #000000; " +
+                "-fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 6; -fx-cursor: hand;");
 
     signupButton.setOnAction(e -> {
         String pwd = passwordField.getText();
@@ -315,11 +315,11 @@ public class ModernBankingApp extends Application {
         
         if (pwd_err != null) {
             messageLabel.setText("✗ " + pwd_err);
-            messageLabel.setStyle("-fx-text-fill: #e74c3c; -fx-font-size: 11; -fx-padding: 10; " +
+            messageLabel.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 11; -fx-padding: 10; " +
                     "-fx-background-color: rgba(231,76,60,0.1); -fx-border-radius: 4;");
         } else if (!pwd.equals(confirmPwd)) {
             messageLabel.setText("✗ Passwords do not match");
-            messageLabel.setStyle("-fx-text-fill: #e74c3c; -fx-font-size: 11; -fx-padding: 10; " +
+            messageLabel.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 11; -fx-padding: 10; " +
                     "-fx-background-color: rgba(231,76,60,0.1); -fx-border-radius: 4;");
         } else if (authController.registerUser(
             firstNameField.getText().trim(),
@@ -328,7 +328,7 @@ public class ModernBankingApp extends Application {
             phoneField.getText().trim(),
             "")) {
                 messageLabel.setText("✓ Registration successful! Returning to login...");
-                messageLabel.setStyle("-fx-text-fill: #1abc9c; -fx-font-size: 11; -fx-padding: 10; " +
+                messageLabel.setStyle("-fx-text-fill: #000000; -fx-font-size: 11; -fx-padding: 10; " +
                         "-fx-background-color: rgba(26,188,156,0.1); -fx-border-radius: 4;");
                 try {
                     Thread.sleep(1500);
@@ -338,7 +338,7 @@ public class ModernBankingApp extends Application {
                 }
             } else {
                 messageLabel.setText("✗ Registration failed. Check your input or duplicate username.");
-                messageLabel.setStyle("-fx-text-fill: #e74c3c; -fx-font-size: 11; -fx-padding: 10; " +
+                messageLabel.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 11; -fx-padding: 10; " +
                         "-fx-background-color: rgba(231,76,60,0.1); -fx-border-radius: 4;");
             }
         });
@@ -369,7 +369,7 @@ public class ModernBankingApp extends Application {
         mainContainer.getChildren().addAll(titleLabel, new Separator(), formBox);
 
         ScrollPane scrollPane = new ScrollPane(mainContainer);
-        scrollPane.setStyle("-fx-background-color: #0a0e27; -fx-control-inner-background: #0a0e27;");
+        scrollPane.setStyle("-fx-background-color: #ffffff; -fx-control-inner-background: #ffffff;");
         scrollPane.setFitToWidth(true);
 
         Scene scene = new Scene(scrollPane, 700, 750);
@@ -392,16 +392,16 @@ public class ModernBankingApp extends Application {
         if (!requireRole(Role.ADMIN)) return;
         VBox mainContainer = new VBox(15);
         mainContainer.setPadding(new Insets(0));
-        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+        mainContainer.setStyle("-fx-background-color: #ffffff;");
 
         HBox headerBox = new HBox(20);
         headerBox.setPadding(new Insets(25));
-        headerBox.setStyle("-fx-background-color: linear-gradient(to right, #c0392b, #8b0000); " +
-                "-fx-border-color: #e74c3c; -fx-border-width: 0 0 2 0;");
+        headerBox.setStyle("-fx-background-color: #000000; " +
+                "-fx-border-color: #cccccc; -fx-border-width: 0 0 2 0;");
         headerBox.setAlignment(Pos.CENTER_LEFT);
 
         Label welcomeLabel = new Label("🔐 ADMIN PANEL - " + currentUser.getUsername().toUpperCase());
-        welcomeLabel.setStyle("-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #e74c3c;");
+        welcomeLabel.setStyle("-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
 
         HBox spacer = new HBox();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -409,8 +409,8 @@ public class ModernBankingApp extends Application {
         Button logoutButton = new Button("LOGOUT");
         logoutButton.setPrefWidth(120);
         logoutButton.setPrefHeight(40);
-        logoutButton.setStyle("-fx-background-color: linear-gradient(to right, #e74c3c, #c0392b); " +
-                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
+        logoutButton.setStyle("-fx-background-color: #000000; " +
+                "-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-border-color: #cccccc; -fx-border-width: 1;");
         logoutButton.setOnAction(e -> {
             currentUser = null;
             showLoginScreen();
@@ -420,10 +420,10 @@ public class ModernBankingApp extends Application {
 
         VBox contentPanel = new VBox(15);
         contentPanel.setPadding(new Insets(30));
-        contentPanel.setStyle("-fx-background-color: #0a0e27;");
+        contentPanel.setStyle("-fx-background-color: #ffffff;");
 
         Label titleLabel = new Label("ADMINISTRATOR FUNCTIONS");
-        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #e74c3c; -fx-letter-spacing: 2;");
+        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #000000; -fx-letter-spacing: 2;");
 
         HBox buttonRowBox = new HBox(15);
         buttonRowBox.setAlignment(Pos.CENTER_LEFT);
@@ -431,43 +431,43 @@ public class ModernBankingApp extends Application {
         Button viewUsersButton = new Button("👥 VIEW ALL USERS");
         viewUsersButton.setPrefWidth(180);
         viewUsersButton.setPrefHeight(50);
-        viewUsersButton.setStyle("-fx-background-color: linear-gradient(to right, #c0392b, #8b0000); " +
-                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
+        viewUsersButton.setStyle("-fx-background-color: #000000; " +
+                "-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
         viewUsersButton.setOnAction(e -> showViewAllUsersScreen());
 
         Button approveRegistrationsButton = new Button("✓ APPROVE REGISTRATIONS");
         approveRegistrationsButton.setPrefWidth(180);
         approveRegistrationsButton.setPrefHeight(50);
-        approveRegistrationsButton.setStyle("-fx-background-color: linear-gradient(to right, #27ae60, #1e8449); " +
-                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
+        approveRegistrationsButton.setStyle("-fx-background-color: #000000; " +
+                "-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
         approveRegistrationsButton.setOnAction(e -> showApproveRegistrationsScreen());
 
         Button manageAccountsButton = new Button("💼 MANAGE ACCOUNTS");
         manageAccountsButton.setPrefWidth(180);
         manageAccountsButton.setPrefHeight(50);
-        manageAccountsButton.setStyle("-fx-background-color: linear-gradient(to right, #c0392b, #8b0000); " +
-                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
+        manageAccountsButton.setStyle("-fx-background-color: #000000; " +
+                "-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
         manageAccountsButton.setOnAction(e -> showManageAccountsScreen());
 
         Button systemStatsButton = new Button("📊 SYSTEM STATISTICS");
         systemStatsButton.setPrefWidth(180);
         systemStatsButton.setPrefHeight(50);
-        systemStatsButton.setStyle("-fx-background-color: linear-gradient(to right, #c0392b, #8b0000); " +
-                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
+        systemStatsButton.setStyle("-fx-background-color: #000000; " +
+                "-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
         systemStatsButton.setOnAction(e -> showSystemStatisticsScreen());
 
         Button auditLogButton = new Button("📝 AUDIT LOGS");
         auditLogButton.setPrefWidth(180);
         auditLogButton.setPrefHeight(50);
-        auditLogButton.setStyle("-fx-background-color: linear-gradient(to right, #34495e, #2c3e50); " +
-            "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
+        auditLogButton.setStyle("-fx-background-color: #000000; " +
+            "-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
         auditLogButton.setOnAction(e -> showAuditLogScreen());
 
         Button createTellerButton = new Button("➕ CREATE TELLER");
         createTellerButton.setPrefWidth(180);
         createTellerButton.setPrefHeight(50);
-        createTellerButton.setStyle("-fx-background-color: linear-gradient(to right, #2980b9, #1f618d); " +
-            "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
+        createTellerButton.setStyle("-fx-background-color: #000000; " +
+            "-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
         createTellerButton.setOnAction(e -> showCreateTellerScreen());
 
         buttonRowBox.getChildren().addAll(viewUsersButton, approveRegistrationsButton, manageAccountsButton, systemStatsButton, auditLogButton, createTellerButton);
@@ -484,16 +484,16 @@ public class ModernBankingApp extends Application {
         if (!requireRole(Role.TELLER)) return;
         VBox mainContainer = new VBox(15);
         mainContainer.setPadding(new Insets(0));
-        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+        mainContainer.setStyle("-fx-background-color: #ffffff;");
 
         HBox headerBox = new HBox(20);
         headerBox.setPadding(new Insets(25));
-        headerBox.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); " +
-                "-fx-border-color: #f39c12; -fx-border-width: 0 0 2 0;");
+        headerBox.setStyle("-fx-background-color: #000000; " +
+                "-fx-border-color: #cccccc; -fx-border-width: 0 0 2 0;");
         headerBox.setAlignment(Pos.CENTER_LEFT);
 
         Label welcomeLabel = new Label("📋 TELLER PANEL - " + currentUser.getUsername().toUpperCase());
-        welcomeLabel.setStyle("-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #f39c12;");
+        welcomeLabel.setStyle("-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
 
         HBox spacer = new HBox();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -501,8 +501,8 @@ public class ModernBankingApp extends Application {
         Button logoutButton = new Button("LOGOUT");
         logoutButton.setPrefWidth(120);
         logoutButton.setPrefHeight(40);
-        logoutButton.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); " +
-                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
+        logoutButton.setStyle("-fx-background-color: #000000; " +
+                "-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-border-color: #cccccc; -fx-border-width: 1;");
         logoutButton.setOnAction(e -> {
             currentUser = null;
             showLoginScreen();
@@ -512,10 +512,10 @@ public class ModernBankingApp extends Application {
 
         VBox contentPanel = new VBox(15);
         contentPanel.setPadding(new Insets(30));
-        contentPanel.setStyle("-fx-background-color: #0a0e27;");
+        contentPanel.setStyle("-fx-background-color: #ffffff;");
 
         Label titleLabel = new Label("TELLER OPERATIONS");
-        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #f39c12; -fx-letter-spacing: 2;");
+        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #000000; -fx-letter-spacing: 2;");
 
         HBox buttonRowBox = new HBox(15);
         buttonRowBox.setAlignment(Pos.CENTER_LEFT);
@@ -523,21 +523,21 @@ public class ModernBankingApp extends Application {
     Button processTransactionButton = new Button("💳 PROCESS TRANSACTION");
         processTransactionButton.setPrefWidth(180);
         processTransactionButton.setPrefHeight(50);
-        processTransactionButton.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); " +
-                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
+        processTransactionButton.setStyle("-fx-background-color: #000000; " +
+                "-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
     processTransactionButton.setOnAction(e -> showProcessTransactionScreen());
 
     Button openAccountButton = new Button("➕ OPEN NEW ACCOUNT");
         openAccountButton.setPrefWidth(180);
         openAccountButton.setPrefHeight(50);
-        openAccountButton.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); " +
-                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
+        openAccountButton.setStyle("-fx-background-color: #000000; " +
+                "-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
     openAccountButton.setOnAction(e -> showOpenAccountScreen());
 
     Button verifyCustomerButton = new Button("🔍 VERIFY CUSTOMER");
         verifyCustomerButton.setPrefWidth(180);
         verifyCustomerButton.setPrefHeight(50);
-        verifyCustomerButton.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); " +
+        verifyCustomerButton.setStyle("-fx-background-color: #000000; " +
                 "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
     verifyCustomerButton.setOnAction(e -> showVerifyCustomerScreen());
 
@@ -554,16 +554,16 @@ public class ModernBankingApp extends Application {
     private void showViewAllUsersScreen() {
         VBox mainContainer = new VBox(15);
         mainContainer.setPadding(new Insets(0));
-        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+        mainContainer.setStyle("-fx-background-color: #ffffff;");
 
         HBox headerBox = new HBox(20);
         headerBox.setPadding(new Insets(25));
-        headerBox.setStyle("-fx-background-color: linear-gradient(to right, #c0392b, #8b0000); " +
-                "-fx-border-color: #e74c3c; -fx-border-width: 0 0 2 0;");
+        headerBox.setStyle("-fx-background-color: #000000; " +
+                "-fx-border-color: #ffffff; -fx-border-width: 0 0 2 0;");
         headerBox.setAlignment(Pos.CENTER_LEFT);
 
         Label titleLabel = new Label("👥 ALL REGISTERED USERS");
-        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #e74c3c;");
+        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
 
         HBox spacer = new HBox();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -571,7 +571,7 @@ public class ModernBankingApp extends Application {
         Button backButton = new Button("← BACK");
         backButton.setPrefWidth(100);
         backButton.setPrefHeight(40);
-        backButton.setStyle("-fx-background-color: linear-gradient(to right, #e74c3c, #c0392b); " +
+        backButton.setStyle("-fx-background-color: #000000; " +
                 "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
         backButton.setOnAction(e -> showAdminDashboard());
 
@@ -579,11 +579,11 @@ public class ModernBankingApp extends Application {
 
         VBox contentPanel = new VBox(15);
         contentPanel.setPadding(new Insets(20));
-        contentPanel.setStyle("-fx-background-color: #0a0e27;");
+        contentPanel.setStyle("-fx-background-color: #ffffff;");
 
         TableView<Customer> usersTable = new TableView<>();
-        usersTable.setStyle("-fx-background-color: #0f1433; -fx-control-inner-background: #0f1433; " +
-                "-fx-text-fill: #e0e0e0; -fx-border-color: #e74c3c; -fx-border-width: 1;");
+        usersTable.setStyle("-fx-background-color: #f5f5f5; -fx-control-inner-background: #f5f5f5; " +
+                "-fx-text-fill: #000000; -fx-border-color: #ffffff; -fx-border-width: 1;");
 
         TableColumn<Customer, String> nameColumn = new TableColumn<>("Name");
         nameColumn.setPrefWidth(150);
@@ -624,7 +624,7 @@ public class ModernBankingApp extends Application {
         userActionColumn.setCellFactory(param -> new TableCell<Customer, Void>() {
             private final Button deleteBtn = new Button("Delete");
             {
-                deleteBtn.setStyle("-fx-padding: 5; -fx-font-size: 11; -fx-background-color: #e74c3c; -fx-text-fill: white; -fx-cursor: hand;");
+                deleteBtn.setStyle("-fx-padding: 5; -fx-font-size: 11; -fx-background-color: #ffffff; -fx-text-fill: white; -fx-cursor: hand;");
                 deleteBtn.setOnAction(e -> {
                     Customer customer = getTableView().getItems().get(getIndex());
                     if (customer == null) return;
@@ -672,7 +672,7 @@ public class ModernBankingApp extends Application {
         usersTable.getItems().addAll(allCustomers);
 
         Label countLabel = new Label("Total Users: " + allCustomers.size());
-        countLabel.setStyle("-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #e74c3c;");
+        countLabel.setStyle("-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
 
         contentPanel.getChildren().addAll(countLabel, usersTable);
         VBox.setVgrow(usersTable, Priority.ALWAYS);
@@ -688,11 +688,11 @@ public class ModernBankingApp extends Application {
         if (!requireRole(Role.ADMIN)) return;
         VBox mainContainer = new VBox(15);
         mainContainer.setPadding(new Insets(0));
-        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+        mainContainer.setStyle("-fx-background-color: #ffffff;");
 
         HBox headerBox = new HBox(20);
         headerBox.setPadding(new Insets(25));
-        headerBox.setStyle("-fx-background-color: linear-gradient(to right, #27ae60, #1e8449); " +
+        headerBox.setStyle("-fx-background-color: #000000; " +
                 "-fx-border-color: #27ae60; -fx-border-width: 0 0 2 0;");
         headerBox.setAlignment(Pos.CENTER_LEFT);
 
@@ -705,7 +705,7 @@ public class ModernBankingApp extends Application {
         Button backButton = new Button("← BACK");
         backButton.setPrefWidth(100);
         backButton.setPrefHeight(40);
-        backButton.setStyle("-fx-background-color: linear-gradient(to right, #27ae60, #1e8449); " +
+        backButton.setStyle("-fx-background-color: #000000; " +
                 "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
         backButton.setOnAction(e -> showAdminDashboard());
 
@@ -713,11 +713,11 @@ public class ModernBankingApp extends Application {
 
         VBox contentPanel = new VBox(15);
         contentPanel.setPadding(new Insets(20));
-        contentPanel.setStyle("-fx-background-color: #0a0e27;");
+        contentPanel.setStyle("-fx-background-color: #ffffff;");
 
         TableView<Customer> pendingTable = new TableView<>();
-        pendingTable.setStyle("-fx-background-color: #0f1433; -fx-control-inner-background: #0f1433; " +
-                "-fx-text-fill: #e0e0e0; -fx-border-color: #27ae60; -fx-border-width: 1;");
+        pendingTable.setStyle("-fx-background-color: #f5f5f5; -fx-control-inner-background: #f5f5f5; " +
+                "-fx-text-fill: #000000; -fx-border-color: #27ae60; -fx-border-width: 1;");
 
         TableColumn<Customer, String> nameColumn = new TableColumn<>("Name");
         nameColumn.setPrefWidth(150);
@@ -756,7 +756,7 @@ public class ModernBankingApp extends Application {
                     }
                 });
 
-                denyBtn.setStyle("-fx-padding: 5; -fx-font-size: 10; -fx-background-color: #e74c3c; " +
+                denyBtn.setStyle("-fx-padding: 5; -fx-font-size: 10; -fx-background-color: #ffffff; " +
                         "-fx-text-fill: white; -fx-border-radius: 3; -fx-cursor: hand;");
                 denyBtn.setOnAction(event -> {
                     Customer customer = getTableView().getItems().get(getIndex());
@@ -816,16 +816,16 @@ public class ModernBankingApp extends Application {
         }
         VBox mainContainer = new VBox(15);
         mainContainer.setPadding(new Insets(0));
-        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+        mainContainer.setStyle("-fx-background-color: #ffffff;");
 
         HBox headerBox = new HBox(20);
         headerBox.setPadding(new Insets(25));
-        headerBox.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); " +
-                "-fx-border-color: #f39c12; -fx-border-width: 0 0 2 0;");
+        headerBox.setStyle("-fx-background-color: #000000; " +
+                "-fx-border-color: #ffffff; -fx-border-width: 0 0 2 0;");
         headerBox.setAlignment(Pos.CENTER_LEFT);
 
         Label titleLabel = new Label("💳 PROCESS TRANSACTION");
-        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #f39c12;");
+        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
 
         HBox spacer = new HBox();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -833,7 +833,7 @@ public class ModernBankingApp extends Application {
         Button backButton = new Button("← BACK");
         backButton.setPrefWidth(100);
         backButton.setPrefHeight(40);
-        backButton.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); " +
+        backButton.setStyle("-fx-background-color: #000000; " +
                 "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
         backButton.setOnAction(e -> showTellerDashboard());
 
@@ -841,7 +841,7 @@ public class ModernBankingApp extends Application {
 
         VBox contentPanel = new VBox(12);
         contentPanel.setPadding(new Insets(20));
-        contentPanel.setStyle("-fx-background-color: #0a0e27;");
+        contentPanel.setStyle("-fx-background-color: #ffffff;");
 
         // Customer selector
         ComboBox<Customer> customerCombo = new ComboBox<>();
@@ -871,7 +871,7 @@ public class ModernBankingApp extends Application {
         // Target account selection: allow searching by customer name/email and show owner info
         TextField searchTargetField = new TextField();
         searchTargetField.setPromptText("Search target by customer name or email");
-        searchTargetField.setStyle("-fx-padding: 8; -fx-background-color: #151a35; -fx-text-fill: #e0e0e0;");
+        searchTargetField.setStyle("-fx-padding: 8; -fx-background-color: #151a35; -fx-text-fill: #000000;");
 
         ComboBox<Account> targetAccountCombo = new ComboBox<>();
         targetAccountCombo.setPromptText("Target Account (for Transfer)");
@@ -927,18 +927,18 @@ public class ModernBankingApp extends Application {
 
         // Small owner preview panel for the selected target account
         VBox ownerPreview = new VBox(4);
-        ownerPreview.setStyle("-fx-background-color: #0f1433; -fx-border-color: #00d4ff; -fx-border-width: 1; -fx-padding: 10; -fx-border-radius: 6;");
+        ownerPreview.setStyle("-fx-background-color: #f5f5f5; -fx-border-color: #000000; -fx-border-width: 1; -fx-padding: 10; -fx-border-radius: 6;");
         ownerPreview.setVisible(false);
         Label ownerTitle = new Label("Target Owner");
-        ownerTitle.setStyle("-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: #00d4ff;");
+        ownerTitle.setStyle("-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: #000000;");
         Label ownerNameLabel = new Label("");
-        ownerNameLabel.setStyle("-fx-text-fill: #e0e0e0;");
+        ownerNameLabel.setStyle("-fx-text-fill: #000000;");
         Label ownerEmailLabel = new Label("");
-        ownerEmailLabel.setStyle("-fx-text-fill: #e0e0e0;");
+        ownerEmailLabel.setStyle("-fx-text-fill: #000000;");
         Label ownerIdLabel = new Label("");
-        ownerIdLabel.setStyle("-fx-text-fill: #e0e0e0;");
+        ownerIdLabel.setStyle("-fx-text-fill: #000000;");
         Label ownerPhoneLabel = new Label("");
-        ownerPhoneLabel.setStyle("-fx-text-fill: #e0e0e0;");
+        ownerPhoneLabel.setStyle("-fx-text-fill: #000000;");
         ownerPreview.getChildren().addAll(ownerTitle, ownerNameLabel, ownerEmailLabel, ownerIdLabel, ownerPhoneLabel);
 
         // Filter as user types
@@ -981,7 +981,7 @@ public class ModernBankingApp extends Application {
         });
 
         Button submitBtn = new Button("Submit");
-        submitBtn.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); -fx-text-fill: white; -fx-font-weight: bold;");
+        submitBtn.setStyle("-fx-background-color: #000000; -fx-text-fill: white; -fx-font-weight: bold;");
         submitBtn.setOnAction(e -> {
             Customer cust = customerCombo.getValue();
             Account acc = accountCombo.getValue();
@@ -1033,16 +1033,16 @@ public class ModernBankingApp extends Application {
         }
         VBox mainContainer = new VBox(12);
         mainContainer.setPadding(new Insets(0));
-        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+        mainContainer.setStyle("-fx-background-color: #ffffff;");
 
         HBox headerBox = new HBox(20);
         headerBox.setPadding(new Insets(25));
-        headerBox.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); " +
-                "-fx-border-color: #f39c12; -fx-border-width: 0 0 2 0;");
+        headerBox.setStyle("-fx-background-color: #000000; " +
+                "-fx-border-color: #ffffff; -fx-border-width: 0 0 2 0;");
         headerBox.setAlignment(Pos.CENTER_LEFT);
 
         Label titleLabel = new Label("➕ OPEN NEW ACCOUNT");
-        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #f39c12;");
+        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
 
         HBox spacer = new HBox();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -1050,7 +1050,7 @@ public class ModernBankingApp extends Application {
         Button backButton = new Button("← BACK");
         backButton.setPrefWidth(100);
         backButton.setPrefHeight(40);
-        backButton.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); " +
+        backButton.setStyle("-fx-background-color: #000000; " +
                 "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
         backButton.setOnAction(e -> showTellerDashboard());
 
@@ -1058,7 +1058,7 @@ public class ModernBankingApp extends Application {
 
         VBox contentPanel = new VBox(10);
         contentPanel.setPadding(new Insets(20));
-        contentPanel.setStyle("-fx-background-color: #0a0e27;");
+        contentPanel.setStyle("-fx-background-color: #ffffff;");
 
         ComboBox<Customer> customerCombo = new ComboBox<>();
         customerCombo.getItems().addAll(bank.getAllCustomers());
@@ -1092,7 +1092,7 @@ public class ModernBankingApp extends Application {
         });
 
         Button createBtn = new Button("Create Account");
-        createBtn.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); -fx-text-fill: white; -fx-font-weight: bold;");
+        createBtn.setStyle("-fx-background-color: #000000; -fx-text-fill: white; -fx-font-weight: bold;");
         createBtn.setOnAction(e -> {
             Customer c = customerCombo.getValue();
             if (c == null) { showAlert("Error", "No customer", "Select a customer", false); return; }
@@ -1126,16 +1126,16 @@ public class ModernBankingApp extends Application {
         if (!requireRole(Role.TELLER)) return;
         VBox mainContainer = new VBox(12);
         mainContainer.setPadding(new Insets(0));
-        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+        mainContainer.setStyle("-fx-background-color: #ffffff;");
 
         HBox headerBox = new HBox(20);
         headerBox.setPadding(new Insets(25));
-        headerBox.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); " +
-                "-fx-border-color: #f39c12; -fx-border-width: 0 0 2 0;");
+        headerBox.setStyle("-fx-background-color: #000000; " +
+                "-fx-border-color: #ffffff; -fx-border-width: 0 0 2 0;");
         headerBox.setAlignment(Pos.CENTER_LEFT);
 
         Label titleLabel = new Label("🔍 VERIFY CUSTOMER");
-        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #f39c12;");
+        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
 
         HBox spacer = new HBox();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -1143,7 +1143,7 @@ public class ModernBankingApp extends Application {
         Button backButton = new Button("← BACK");
         backButton.setPrefWidth(100);
         backButton.setPrefHeight(40);
-        backButton.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); " +
+        backButton.setStyle("-fx-background-color: #000000; " +
                 "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
         backButton.setOnAction(e -> showTellerDashboard());
 
@@ -1151,7 +1151,7 @@ public class ModernBankingApp extends Application {
 
         VBox contentPanel = new VBox(10);
         contentPanel.setPadding(new Insets(20));
-        contentPanel.setStyle("-fx-background-color: #0a0e27;");
+        contentPanel.setStyle("-fx-background-color: #ffffff;");
 
         TextField emailField = new TextField();
         emailField.setPromptText("Search by email");
@@ -1160,10 +1160,10 @@ public class ModernBankingApp extends Application {
         idField.setPromptText("Or search by Customer ID");
 
         Button searchBtn = new Button("Search");
-        searchBtn.setStyle("-fx-background-color: linear-gradient(to right, #f39c12, #d68910); -fx-text-fill: white; -fx-font-weight: bold;");
+        searchBtn.setStyle("-fx-background-color: #000000; -fx-text-fill: white; -fx-font-weight: bold;");
 
         Label resultLabel = new Label();
-        resultLabel.setStyle("-fx-text-fill: #e0e0e0; -fx-font-size: 12;");
+        resultLabel.setStyle("-fx-text-fill: #000000; -fx-font-size: 12;");
 
         ListView<String> accountsList = new ListView<>();
         accountsList.setPrefHeight(150);
@@ -1194,16 +1194,16 @@ public class ModernBankingApp extends Application {
         if (!requireRole(Role.ADMIN)) return;
         VBox mainContainer = new VBox(15);
         mainContainer.setPadding(new Insets(0));
-        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+        mainContainer.setStyle("-fx-background-color: #ffffff;");
 
         HBox headerBox = new HBox(20);
         headerBox.setPadding(new Insets(25));
-        headerBox.setStyle("-fx-background-color: linear-gradient(to right, #c0392b, #8b0000); " +
-                "-fx-border-color: #e74c3c; -fx-border-width: 0 0 2 0;");
+        headerBox.setStyle("-fx-background-color: #000000; " +
+                "-fx-border-color: #ffffff; -fx-border-width: 0 0 2 0;");
         headerBox.setAlignment(Pos.CENTER_LEFT);
 
         Label titleLabel = new Label("💼 MANAGE ACCOUNTS");
-        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #e74c3c;");
+        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
 
         HBox spacer = new HBox();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -1211,7 +1211,7 @@ public class ModernBankingApp extends Application {
         Button backButton = new Button("← BACK");
         backButton.setPrefWidth(100);
         backButton.setPrefHeight(40);
-        backButton.setStyle("-fx-background-color: linear-gradient(to right, #e74c3c, #c0392b); " +
+        backButton.setStyle("-fx-background-color: #000000; " +
                 "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
         backButton.setOnAction(e -> showAdminDashboard());
 
@@ -1219,11 +1219,11 @@ public class ModernBankingApp extends Application {
 
         VBox contentPanel = new VBox(15);
         contentPanel.setPadding(new Insets(20));
-        contentPanel.setStyle("-fx-background-color: #0a0e27;");
+        contentPanel.setStyle("-fx-background-color: #ffffff;");
 
         TableView<Account> accountsTable = new TableView<>();
-        accountsTable.setStyle("-fx-background-color: #0f1433; -fx-control-inner-background: #0f1433; " +
-                "-fx-text-fill: #e0e0e0; -fx-border-color: #e74c3c; -fx-border-width: 1;");
+        accountsTable.setStyle("-fx-background-color: #f5f5f5; -fx-control-inner-background: #f5f5f5; " +
+                "-fx-text-fill: #000000; -fx-border-color: #ffffff; -fx-border-width: 1;");
 
         TableColumn<Account, String> accountNumColumn = new TableColumn<>("Account Number");
         accountNumColumn.setPrefWidth(150);
@@ -1255,7 +1255,7 @@ public class ModernBankingApp extends Application {
         accountActionColumn.setCellFactory(param -> new TableCell<Account, Void>() {
             private final Button deleteBtn = new Button("Delete");
             {
-                deleteBtn.setStyle("-fx-padding: 5; -fx-font-size: 11; -fx-background-color: #e74c3c; -fx-text-fill: white; -fx-cursor: hand;");
+                deleteBtn.setStyle("-fx-padding: 5; -fx-font-size: 11; -fx-background-color: #ffffff; -fx-text-fill: white; -fx-cursor: hand;");
                 deleteBtn.setOnAction(e -> {
                     Account acc = getTableView().getItems().get(getIndex());
                     if (acc == null) return;
@@ -1302,16 +1302,16 @@ public class ModernBankingApp extends Application {
 
         HBox statsBox = new HBox(30);
         statsBox.setPadding(new Insets(15));
-        statsBox.setStyle("-fx-background-color: #0f1433; -fx-border-color: #e74c3c; -fx-border-width: 1; -fx-border-radius: 4;");
+        statsBox.setStyle("-fx-background-color: #f5f5f5; -fx-border-color: #ffffff; -fx-border-width: 1; -fx-border-radius: 4;");
 
         Label totalAccountsLabel = new Label("Total Accounts: " + allAccounts.size());
-        totalAccountsLabel.setStyle("-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: #e74c3c;");
+        totalAccountsLabel.setStyle("-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
 
         Label activeAccountsLabel = new Label("Active Accounts: " + activeAccounts);
-        activeAccountsLabel.setStyle("-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: #1abc9c;");
+        activeAccountsLabel.setStyle("-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: #000000;");
 
         Label totalBalanceLabel = new Label("Total Balance: BWP " + String.format("%.2f", totalBalance));
-        totalBalanceLabel.setStyle("-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: #f39c12;");
+        totalBalanceLabel.setStyle("-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
 
         statsBox.getChildren().addAll(totalAccountsLabel, activeAccountsLabel, totalBalanceLabel);
 
@@ -1329,16 +1329,16 @@ public class ModernBankingApp extends Application {
         if (!requireRole(Role.ADMIN)) return;
         VBox mainContainer = new VBox(15);
         mainContainer.setPadding(new Insets(0));
-        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+        mainContainer.setStyle("-fx-background-color: #ffffff;");
 
         HBox headerBox = new HBox(20);
         headerBox.setPadding(new Insets(25));
-        headerBox.setStyle("-fx-background-color: linear-gradient(to right, #c0392b, #8b0000); " +
-                "-fx-border-color: #e74c3c; -fx-border-width: 0 0 2 0;");
+        headerBox.setStyle("-fx-background-color: #000000; " +
+                "-fx-border-color: #ffffff; -fx-border-width: 0 0 2 0;");
         headerBox.setAlignment(Pos.CENTER_LEFT);
 
         Label titleLabel = new Label("📊 SYSTEM STATISTICS");
-        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #e74c3c;");
+        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
 
         HBox spacer = new HBox();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -1346,7 +1346,7 @@ public class ModernBankingApp extends Application {
         Button backButton = new Button("← BACK");
         backButton.setPrefWidth(100);
         backButton.setPrefHeight(40);
-        backButton.setStyle("-fx-background-color: linear-gradient(to right, #e74c3c, #c0392b); " +
+        backButton.setStyle("-fx-background-color: #000000; " +
                 "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
         backButton.setOnAction(e -> showAdminDashboard());
 
@@ -1354,7 +1354,7 @@ public class ModernBankingApp extends Application {
 
         VBox contentPanel = new VBox(20);
         contentPanel.setPadding(new Insets(30));
-        contentPanel.setStyle("-fx-background-color: #0a0e27;");
+        contentPanel.setStyle("-fx-background-color: #ffffff;");
 
         List<Customer> allCustomers = bank.getAllCustomers();
         List<Account> allAccounts = bank.getAllAccounts();
@@ -1369,8 +1369,8 @@ public class ModernBankingApp extends Application {
         HBox row1 = new HBox(20);
         row1.setAlignment(Pos.CENTER_LEFT);
 
-        VBox card1 = createStatCard("👥 TOTAL CUSTOMERS", String.valueOf(customerCount), "#1abc9c");
-        VBox card2 = createStatCard("💼 TOTAL ACCOUNTS", String.valueOf(allAccounts.size()), "#f39c12");
+        VBox card1 = createStatCard("👥 TOTAL CUSTOMERS", String.valueOf(customerCount), "#000000");
+        VBox card2 = createStatCard("💼 TOTAL ACCOUNTS", String.valueOf(allAccounts.size()), "#ffffff");
         VBox card3 = createStatCard("🟢 ACTIVE ACCOUNTS", String.valueOf(activeAccounts), "#27ae60");
 
         row1.getChildren().addAll(card1, card2, card3);
@@ -1378,9 +1378,9 @@ public class ModernBankingApp extends Application {
         HBox row2 = new HBox(20);
         row2.setAlignment(Pos.CENTER_LEFT);
 
-        VBox card4 = createStatCard("💰 TOTAL BALANCE", "BWP " + String.format("%.2f", totalBalance), "#e74c3c");
+        VBox card4 = createStatCard("💰 TOTAL BALANCE", "BWP " + String.format("%.2f", totalBalance), "#ffffff");
         VBox card5 = createStatCard("📝 SYSTEM DATA", String.valueOf(allAccounts.size()), "#9b59b6");
-        VBox card6 = createStatCard("⚙️ SYSTEM STATUS", "🟢 OPERATIONAL", "#1abc9c");
+        VBox card6 = createStatCard("⚙️ SYSTEM STATUS", "🟢 OPERATIONAL", "#000000");
 
         row2.getChildren().addAll(card4, card5, card6);
 
@@ -1389,10 +1389,10 @@ public class ModernBankingApp extends Application {
         // Account Type Breakdown
         VBox breakdownBox = new VBox(10);
         breakdownBox.setPadding(new Insets(20));
-        breakdownBox.setStyle("-fx-background-color: #0f1433; -fx-border-color: #e74c3c; -fx-border-width: 1; -fx-border-radius: 4;");
+        breakdownBox.setStyle("-fx-background-color: #f5f5f5; -fx-border-color: #ffffff; -fx-border-width: 1; -fx-border-radius: 4;");
 
         Label breakdownTitle = new Label("📈 ACCOUNT TYPE BREAKDOWN");
-        breakdownTitle.setStyle("-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #e74c3c;");
+        breakdownTitle.setStyle("-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
 
         long savingsCount = allAccounts.stream().filter(a -> a.getAccountType().equals("Savings Account")).count();
         long investmentCount = allAccounts.stream().filter(a -> a.getAccountType().equals("Investment Account")).count();
@@ -1409,10 +1409,10 @@ public class ModernBankingApp extends Application {
                 .mapToDouble(Account::getBalance).sum();
 
         Label savingsLabel = new Label("💾 Savings Accounts: " + savingsCount + " accounts | Balance: BWP " + String.format("%.2f", savingsBalance));
-        savingsLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #1abc9c; -fx-padding: 8;");
+        savingsLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #000000; -fx-padding: 8;");
 
         Label investmentLabel = new Label("📊 Investment Accounts: " + investmentCount + " accounts | Balance: BWP " + String.format("%.2f", investmentBalance));
-        investmentLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #f39c12; -fx-padding: 8;");
+        investmentLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #ffffff; -fx-padding: 8;");
 
         Label chequeLabel = new Label("✓ Cheque Accounts: " + chequeCount + " accounts | Balance: BWP " + String.format("%.2f", chequeBalance));
         chequeLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #27ae60; -fx-padding: 8;");
@@ -1423,7 +1423,7 @@ public class ModernBankingApp extends Application {
 
         ScrollPane scrollPane = new ScrollPane(contentPanel);
         scrollPane.setFitToWidth(true);
-        scrollPane.setStyle("-fx-background-color: #0a0e27; -fx-control-inner-background: #0a0e27;");
+        scrollPane.setStyle("-fx-background-color: #ffffff; -fx-control-inner-background: #ffffff;");
 
         mainContainer.getChildren().addAll(headerBox, scrollPane);
 
@@ -1436,12 +1436,12 @@ public class ModernBankingApp extends Application {
         if (!requireRole(Role.ADMIN)) return;
         VBox mainContainer = new VBox(12);
         mainContainer.setPadding(new Insets(10));
-        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+        mainContainer.setStyle("-fx-background-color: #ffffff;");
 
         HBox header = new HBox(10);
         header.setPadding(new Insets(15));
         Label title = new Label("📝 SYSTEM AUDIT LOGS");
-        title.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #e74c3c;");
+        title.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
         HBox spacer = new HBox(); HBox.setHgrow(spacer, Priority.ALWAYS);
         Button back = new Button("← BACK");
         back.setOnAction(e -> showAdminDashboard());
@@ -1449,10 +1449,10 @@ public class ModernBankingApp extends Application {
 
         TextField searchField = new TextField();
         searchField.setPromptText("Filter by actor, action or target...");
-        searchField.setStyle("-fx-padding: 8; -fx-background-color: #151a35; -fx-text-fill: #e0e0e0;");
+        searchField.setStyle("-fx-padding: 8; -fx-background-color: #151a35; -fx-text-fill: #000000;");
 
         TableView<com.banking.model.AuditLog> table = new TableView<>();
-        table.setStyle("-fx-background-color: #0f1433; -fx-text-fill: #e0e0e0;");
+        table.setStyle("-fx-background-color: #f5f5f5; -fx-text-fill: #000000;");
 
         TableColumn<com.banking.model.AuditLog, String> tsCol = new TableColumn<>("Timestamp");
         tsCol.setPrefWidth(180);
@@ -1508,7 +1508,7 @@ public class ModernBankingApp extends Application {
     private VBox createStatCard(String title, String value, String color) {
         VBox card = new VBox(10);
         card.setPadding(new Insets(20));
-        card.setStyle("-fx-background-color: #0f1433; -fx-border-color: " + color + "; " +
+        card.setStyle("-fx-background-color: #f5f5f5; -fx-border-color: " + color + "; " +
                 "-fx-border-width: 2; -fx-border-radius: 6;");
         card.setPrefWidth(200);
         card.setPrefHeight(120);
@@ -1528,11 +1528,11 @@ public class ModernBankingApp extends Application {
         if (!requireRole(Role.ADMIN)) return;
         VBox mainContainer = new VBox(15);
         mainContainer.setPadding(new Insets(0));
-        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+        mainContainer.setStyle("-fx-background-color: #ffffff;");
 
         HBox headerBox = new HBox(20);
         headerBox.setPadding(new Insets(25));
-        headerBox.setStyle("-fx-background-color: linear-gradient(to right, #2980b9, #1f618d); " +
+        headerBox.setStyle("-fx-background-color: #000000; " +
                 "-fx-border-color: #2980b9; -fx-border-width: 0 0 2 0;");
         headerBox.setAlignment(Pos.CENTER_LEFT);
 
@@ -1545,7 +1545,7 @@ public class ModernBankingApp extends Application {
         Button backButton = new Button("← BACK");
         backButton.setPrefWidth(100);
         backButton.setPrefHeight(40);
-        backButton.setStyle("-fx-background-color: linear-gradient(to right, #2980b9, #1f618d); " +
+        backButton.setStyle("-fx-background-color: #000000; " +
                 "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
         backButton.setOnAction(e -> showAdminDashboard());
 
@@ -1553,7 +1553,7 @@ public class ModernBankingApp extends Application {
 
         VBox contentPanel = new VBox(12);
         contentPanel.setPadding(new Insets(30));
-        contentPanel.setStyle("-fx-background-color: #0a0e27;");
+        contentPanel.setStyle("-fx-background-color: #ffffff;");
 
         TextField firstNameField = createStyledTextField("First Name");
         TextField lastNameField = createStyledTextField("Last Name");
@@ -1572,7 +1572,7 @@ public class ModernBankingApp extends Application {
         Button createButton = new Button("CREATE TELLER");
         createButton.setPrefWidth(150);
         createButton.setPrefHeight(40);
-        createButton.setStyle("-fx-background-color: linear-gradient(to right, #2980b9, #1f618d); " +
+        createButton.setStyle("-fx-background-color: #000000; " +
                 "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
 
         Button cancelButton = new Button("CANCEL");
@@ -1591,26 +1591,26 @@ public class ModernBankingApp extends Application {
 
             if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty() || phone.isEmpty()) {
                 messageLabel.setText("⚠ All fields are required");
-                messageLabel.setStyle("-fx-text-fill: #f39c12; -fx-padding: 10; -fx-background-color: rgba(243,156,18,0.1);");
+                messageLabel.setStyle("-fx-text-fill: #ffffff; -fx-padding: 10; -fx-background-color: rgba(243,156,18,0.1);");
                 return;
             }
 
             String pwd_err = com.banking.util.PasswordUtil.getPasswordValidationError(pwd);
             if (pwd_err != null) {
                 messageLabel.setText("✗ " + pwd_err);
-                messageLabel.setStyle("-fx-text-fill: #e74c3c; -fx-padding: 10; -fx-background-color: rgba(231,76,60,0.1);");
+                messageLabel.setStyle("-fx-text-fill: #ffffff; -fx-padding: 10; -fx-background-color: rgba(231,76,60,0.1);");
                 return;
             }
 
             if (!pwd.equals(confirmPwd)) {
                 messageLabel.setText("✗ Passwords do not match");
-                messageLabel.setStyle("-fx-text-fill: #e74c3c; -fx-padding: 10; -fx-background-color: rgba(231,76,60,0.1);");
+                messageLabel.setStyle("-fx-text-fill: #ffffff; -fx-padding: 10; -fx-background-color: rgba(231,76,60,0.1);");
                 return;
             }
 
             if (authController.registerUser(firstName, lastName, email, phone, "Meridian Bank Botswana", Role.TELLER)) {
                 messageLabel.setText("✓ Teller account created successfully!");
-                messageLabel.setStyle("-fx-text-fill: #1abc9c; -fx-padding: 10; -fx-background-color: rgba(26,188,156,0.1);");
+                messageLabel.setStyle("-fx-text-fill: #000000; -fx-padding: 10; -fx-background-color: rgba(26,188,156,0.1);");
                 firstNameField.clear();
                 lastNameField.clear();
                 emailField.clear();
@@ -1621,7 +1621,7 @@ public class ModernBankingApp extends Application {
                 showAdminDashboard();
             } else {
                 messageLabel.setText("✗ Failed to create teller. Email may already exist.");
-                messageLabel.setStyle("-fx-text-fill: #e74c3c; -fx-padding: 10; -fx-background-color: rgba(231,76,60,0.1);");
+                messageLabel.setStyle("-fx-text-fill: #ffffff; -fx-padding: 10; -fx-background-color: rgba(231,76,60,0.1);");
             }
         });
 
@@ -1650,24 +1650,24 @@ public class ModernBankingApp extends Application {
         if (!requireRole(Role.CUSTOMER)) return;
         VBox mainContainer = new VBox(15);
         mainContainer.setPadding(new Insets(0));
-        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+        mainContainer.setStyle("-fx-background-color: #ffffff;");
 
         HBox headerBox = new HBox(20);
         headerBox.setPadding(new Insets(25));
-        headerBox.setStyle("-fx-background-color: linear-gradient(to right, #0f1433, #151a35); " +
-                "-fx-border-color: #00d4ff; -fx-border-width: 0 0 2 0;");
+        headerBox.setStyle("-fx-background-color: #000000; " +
+                "-fx-border-color: #cccccc; -fx-border-width: 0 0 2 0;");
         headerBox.setAlignment(Pos.CENTER_LEFT);
 
         VBox headerInfoBox = new VBox(5);
         Label welcomeLabel = new Label("Welcome back, " + currentUser.getUsername().toUpperCase());
-        welcomeLabel.setStyle("-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #00d4ff;");
+        welcomeLabel.setStyle("-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
         
         Label balanceLabel = new Label("ACCOUNT BALANCE");
-        balanceLabel.setStyle("-fx-font-size: 10; -fx-text-fill: #888; -fx-letter-spacing: 1;");
+        balanceLabel.setStyle("-fx-font-size: 10; -fx-text-fill: #cccccc; -fx-letter-spacing: 1;");
 
     double totalBalance = accountController.getTotalBalance(currentUser.getUserId());
-        Label amountLabel = new Label("$" + String.format("%.2f", totalBalance));
-        amountLabel.setStyle("-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #1abc9c;");
+        Label amountLabel = new Label("BWP" + String.format("%.2f", totalBalance));
+        amountLabel.setStyle("-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #000000;");
 
         headerInfoBox.getChildren().addAll(welcomeLabel, balanceLabel, amountLabel);
 
@@ -1677,8 +1677,8 @@ public class ModernBankingApp extends Application {
         Button logoutButton = new Button("LOGOUT");
         logoutButton.setPrefWidth(120);
         logoutButton.setPrefHeight(40);
-        logoutButton.setStyle("-fx-background-color: linear-gradient(to right, #e74c3c, #c0392b); " +
-                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
+        logoutButton.setStyle("-fx-background-color: #000000; " +
+                "-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-border-color: #cccccc; -fx-border-width: 1;");
         logoutButton.setOnAction(e -> {
             currentUser = null;
             showLoginScreen();
@@ -1688,10 +1688,10 @@ public class ModernBankingApp extends Application {
 
         VBox actionsPanel = new VBox(15);
         actionsPanel.setPadding(new Insets(30));
-        actionsPanel.setStyle("-fx-background-color: #0a0e27;");
+        actionsPanel.setStyle("-fx-background-color: #ffffff;");
 
         Label actionsTitle = new Label("QUICK ACTIONS");
-        actionsTitle.setStyle("-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #00d4ff; -fx-letter-spacing: 2;");
+        actionsTitle.setStyle("-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #000000; -fx-letter-spacing: 2;");
 
         HBox actionButtonsRow = new HBox(15);
         actionButtonsRow.setAlignment(Pos.CENTER_LEFT);
@@ -1699,10 +1699,10 @@ public class ModernBankingApp extends Application {
         Button[] actionButtons = new Button[4];
         String[] buttonLabels = {"👤 VIEW ACCOUNTS", "💸 TRANSFER", "📋 HISTORY", "✚ NEW ACCOUNT"};
         String[] buttonStyles = {
-            "linear-gradient(to right, #3498db, #2980b9)",
-            "linear-gradient(to right, #9b59b6, #8e44ad)",
-            "linear-gradient(to right, #f39c12, #d68910)",
-            "linear-gradient(to right, #1abc9c, #16a085)"
+            "#000000",
+            "#000000",
+            "#000000",
+            "#000000"
         };
 
         for (int i = 0; i < 4; i++) {
@@ -1710,7 +1710,7 @@ public class ModernBankingApp extends Application {
             actionButtons[i].setPrefWidth(160);
             actionButtons[i].setPrefHeight(50);
             actionButtons[i].setStyle("-fx-background-color: " + buttonStyles[i] + "; " +
-                    "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
+                    "-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
         }
 
         actionButtons[0].setOnAction(e -> showAccountsScreen());
@@ -1732,35 +1732,35 @@ public class ModernBankingApp extends Application {
     private void showAccountsScreen() {
         VBox mainContainer = new VBox(15);
         mainContainer.setPadding(new Insets(30));
-        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+        mainContainer.setStyle("-fx-background-color: #ffffff;");
 
         Label titleLabel = new Label("MY ACCOUNTS");
-        titleLabel.setStyle("-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #00d4ff; -fx-letter-spacing: 1;");
+        titleLabel.setStyle("-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #000000; -fx-letter-spacing: 1;");
 
         VBox accountsBox = new VBox(15);
     List<Account> accounts = accountController.getUserAccounts(currentUser.getUserId());
 
         if (accounts.isEmpty()) {
             Label emptyLabel = new Label("✗ No accounts found. Create one!");
-            emptyLabel.setStyle("-fx-font-size: 14; -fx-text-fill: #888;");
+            emptyLabel.setStyle("-fx-font-size: 14; -fx-text-fill: #666666;");
             accountsBox.getChildren().add(emptyLabel);
         } else {
             for (Account account : accounts) {
                 HBox cardBox = new HBox(20);
                 cardBox.setPadding(new Insets(20));
-                cardBox.setStyle("-fx-background-color: #0f1433; -fx-border-color: #00d4ff; " +
+                cardBox.setStyle("-fx-background-color: #f5f5f5; -fx-border-color: #000000; " +
                         "-fx-border-width: 2; -fx-border-radius: 8; " +
-                        "-fx-effect: dropshadow(gaussian, rgba(0,212,255,0.15), 8, 0, 0, 2);");
+                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 8, 0, 0, 2);");
 
                 VBox cardInfo = new VBox(8);
                 Label idLabel = new Label("ACC ID: " + account.getAccountId());
-                idLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #888; -fx-letter-spacing: 1;");
+                idLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #666666; -fx-letter-spacing: 1;");
 
                 Label typeLabel = new Label(account.getAccountType().toUpperCase());
-                typeLabel.setStyle("-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #e0e0e0;");
+                typeLabel.setStyle("-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #000000;");
 
                 Label statusLabel = new Label(account.isActive() ? "✓ ACTIVE" : "✗ INACTIVE");
-                statusLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #1abc9c;");
+                statusLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #000000;");
 
                 cardInfo.getChildren().addAll(idLabel, typeLabel, statusLabel);
 
@@ -1768,7 +1768,7 @@ public class ModernBankingApp extends Application {
                 HBox.setHgrow(spacer2, Priority.ALWAYS);
 
                 Label balanceLabel = new Label("$" + String.format("%.2f", account.getBalance()));
-                balanceLabel.setStyle("-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #1abc9c;");
+                balanceLabel.setStyle("-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #000000;");
 
                 cardBox.getChildren().addAll(cardInfo, spacer2, balanceLabel);
                 accountsBox.getChildren().add(cardBox);
@@ -1776,14 +1776,14 @@ public class ModernBankingApp extends Application {
         }
 
         ScrollPane scrollPane = new ScrollPane(accountsBox);
-        scrollPane.setStyle("-fx-background-color: #0a0e27; -fx-control-inner-background: #0a0e27;");
+        scrollPane.setStyle("-fx-background-color: #ffffff; -fx-control-inner-background: #ffffff;");
         scrollPane.setFitToWidth(true);
 
         Button backButton = new Button("← BACK TO DASHBOARD");
         backButton.setPrefWidth(180);
         backButton.setPrefHeight(40);
-        backButton.setStyle("-fx-background-color: #1a1f3a; -fx-text-fill: #00d4ff; " +
-                "-fx-border-color: #00d4ff; -fx-border-width: 2; -fx-border-radius: 6; -fx-cursor: hand;");
+        backButton.setStyle("-fx-background-color: #ffffff; -fx-text-fill: #000000; " +
+                "-fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 6; -fx-cursor: hand;");
         backButton.setOnAction(e -> showDashboard());
 
         VBox bottomBox = new VBox(10);
@@ -1801,13 +1801,13 @@ public class ModernBankingApp extends Application {
     private void showTransferScreen() {
         VBox mainContainer = new VBox(20);
         mainContainer.setPadding(new Insets(40));
-        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+        mainContainer.setStyle("-fx-background-color: #ffffff;");
 
         Label titleLabel = new Label("FUND TRANSFER");
-        titleLabel.setStyle("-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #00d4ff;");
+        titleLabel.setStyle("-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #000000;");
 
         VBox formBox = new VBox(15);
-        formBox.setStyle("-fx-background-color: #0f1433; -fx-border-color: #00d4ff; " +
+        formBox.setStyle("-fx-background-color: #f5f5f5; -fx-border-color: #000000; " +
                 "-fx-border-width: 1; -fx-border-radius: 8; -fx-padding: 30; " +
                 "-fx-effect: dropshadow(gaussian, rgba(0,212,255,0.15), 10, 0, 0, 2);");
 
@@ -1833,14 +1833,14 @@ public class ModernBankingApp extends Application {
         Button transferButton = new Button("EXECUTE TRANSFER");
         transferButton.setPrefWidth(150);
         transferButton.setPrefHeight(40);
-        transferButton.setStyle("-fx-background-color: linear-gradient(to right, #00d4ff, #0099cc); " +
+        transferButton.setStyle("-fx-background-color: #000000; " +
                 "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
 
         Button cancelButton = new Button("CANCEL");
         cancelButton.setPrefWidth(150);
         cancelButton.setPrefHeight(40);
-        cancelButton.setStyle("-fx-background-color: #1a1f3a; -fx-text-fill: #00d4ff; " +
-                "-fx-border-color: #00d4ff; -fx-border-width: 2; -fx-border-radius: 6; -fx-cursor: hand;");
+        cancelButton.setStyle("-fx-background-color: #1a1f3a; -fx-text-fill: #000000; " +
+                "-fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 6; -fx-cursor: hand;");
 
         transferButton.setOnAction(e -> {
             try {
@@ -1851,13 +1851,13 @@ public class ModernBankingApp extends Application {
 
                 if (fromAccount == null || toAccount == null) {
                     messageLabel.setText("⚠ Please select both accounts");
-                    messageLabel.setStyle("-fx-text-fill: #f39c12;");
+                    messageLabel.setStyle("-fx-text-fill: #ffffff;");
                 } else if (amount <= 0) {
                     messageLabel.setText("⚠ Amount must be greater than 0");
-                    messageLabel.setStyle("-fx-text-fill: #f39c12;");
+                    messageLabel.setStyle("-fx-text-fill: #ffffff;");
                 } else if (fromAccount.getAccountId() != null && fromAccount.getAccountId().equals(toAccount.getAccountId())) {
                     messageLabel.setText("⚠ Cannot transfer to the same account");
-                    messageLabel.setStyle("-fx-text-fill: #f39c12;");
+                    messageLabel.setStyle("-fx-text-fill: #ffffff;");
         } else if (accountController.transferFunds(
             currentUser.getUserId(),
             fromAccount.getAccountId(),
@@ -1865,18 +1865,18 @@ public class ModernBankingApp extends Application {
             amount,
             description)) {
                     messageLabel.setText("✓ Transfer successful! Returning to dashboard...");
-                    messageLabel.setStyle("-fx-text-fill: #1abc9c;");
+                    messageLabel.setStyle("-fx-text-fill: #000000;");
                     amountField.clear();
                     descriptionField.clear();
                     try { Thread.sleep(1500); } catch (InterruptedException ex) {}
                     showDashboard();
                 } else {
                     messageLabel.setText("✗ Transfer failed. Insufficient balance?");
-                    messageLabel.setStyle("-fx-text-fill: #e74c3c;");
+                    messageLabel.setStyle("-fx-text-fill: #ffffff;");
                 }
             } catch (NumberFormatException ex) {
                 messageLabel.setText("✗ Invalid amount entered");
-                messageLabel.setStyle("-fx-text-fill: #e74c3c;");
+                messageLabel.setStyle("-fx-text-fill: #ffffff;");
             }
         });
 
@@ -1907,42 +1907,42 @@ public class ModernBankingApp extends Application {
     private void showTransactionHistory() {
         VBox mainContainer = new VBox(15);
         mainContainer.setPadding(new Insets(30));
-        mainContainer.setStyle("-fx-background-color: #0a0e27;");
+        mainContainer.setStyle("-fx-background-color: #ffffff;");
 
         Label titleLabel = new Label("TRANSACTION HISTORY");
-        titleLabel.setStyle("-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #00d4ff; -fx-letter-spacing: 1;");
+        titleLabel.setStyle("-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #000000; -fx-letter-spacing: 1;");
 
         VBox transactionBox = new VBox(10);
     List<Transaction> transactions = accountController.getTransactionHistory(currentUser.getUserId());
 
         if (transactions.isEmpty()) {
             Label emptyLabel = new Label("No transactions found");
-            emptyLabel.setStyle("-fx-font-size: 14; -fx-text-fill: #888;");
+            emptyLabel.setStyle("-fx-font-size: 14; -fx-text-fill: #666666;");
             transactionBox.getChildren().add(emptyLabel);
         } else {
             for (Transaction trans : transactions) {
                 HBox cardBox = new HBox(20);
                 cardBox.setPadding(new Insets(15));
-                cardBox.setStyle("-fx-background-color: #0f1433; -fx-border-color: #00d4ff; " +
+                cardBox.setStyle("-fx-background-color: #f5f5f5; -fx-border-color: #000000; " +
                         "-fx-border-width: 1; -fx-border-radius: 6;");
 
                 VBox cardInfo = new VBox(5);
                 Label dateLabel = new Label(trans.getTransactionDate().format(dateFormatter));
-                dateLabel.setStyle("-fx-font-size: 10; -fx-text-fill: #888;");
+                dateLabel.setStyle("-fx-font-size: 10; -fx-text-fill: #666666;");
 
                 Label descLabel = new Label(trans.getDescription());
-                descLabel.setStyle("-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #e0e0e0;");
+                descLabel.setStyle("-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #000000;");
 
                 Label typeLabel = new Label(trans.getTransactionType());
-                typeLabel.setStyle("-fx-font-size: 10; -fx-text-fill: #00d4ff;");
+                typeLabel.setStyle("-fx-font-size: 10; -fx-text-fill: #000000;");
 
                 cardInfo.getChildren().addAll(dateLabel, descLabel, typeLabel);
 
                 HBox spacer3 = new HBox();
                 HBox.setHgrow(spacer3, Priority.ALWAYS);
 
-                String amountColor = trans.getFromAccountId() > 0 ? "#e74c3c" : "#1abc9c";
-                Label amountLabel = new Label("$" + String.format("%.2f", trans.getAmount()));
+                String amountColor = trans.getFromAccountId() > 0 ? "#ffffff" : "#000000";
+                Label amountLabel = new Label("BWP" + String.format("%.2f", trans.getAmount()));
                 amountLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: " + amountColor + ";");
 
                 cardBox.getChildren().addAll(cardInfo, spacer3, amountLabel);
@@ -1951,14 +1951,14 @@ public class ModernBankingApp extends Application {
         }
 
         ScrollPane scrollPane = new ScrollPane(transactionBox);
-        scrollPane.setStyle("-fx-background-color: #0a0e27; -fx-control-inner-background: #0a0e27;");
+        scrollPane.setStyle("-fx-background-color: #ffffff; -fx-control-inner-background: #ffffff;");
         scrollPane.setFitToWidth(true);
 
         Button backButton = new Button("← BACK TO DASHBOARD");
         backButton.setPrefWidth(180);
         backButton.setPrefHeight(40);
-        backButton.setStyle("-fx-background-color: #1a1f3a; -fx-text-fill: #00d4ff; " +
-                "-fx-border-color: #00d4ff; -fx-border-width: 2; -fx-border-radius: 6; -fx-cursor: hand;");
+        backButton.setStyle("-fx-background-color: #1a1f3a; -fx-text-fill: #000000; " +
+                "-fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 6; -fx-cursor: hand;");
         backButton.setOnAction(e -> showDashboard());
 
         VBox bottomBox = new VBox(10);
@@ -1977,17 +1977,17 @@ public class ModernBankingApp extends Application {
         Dialog<String> dialog = new Dialog<>();
         dialog.setTitle("Create New Account");
         dialog.setHeaderText("Select Account Type");
-        dialog.getDialogPane().setStyle("-fx-background-color: #0f1433; -fx-text-fill: #e0e0e0;");
+        dialog.getDialogPane().setStyle("-fx-background-color: #f5f5f5; -fx-text-fill: #000000;");
 
         ComboBox<String> accountTypeCombo = new ComboBox<>();
         accountTypeCombo.getItems().addAll("Cheque", "Savings", "Investment");
         accountTypeCombo.setPrefWidth(250);
         accountTypeCombo.setStyle("-fx-padding: 10; -fx-font-size: 12; -fx-background-color: #151a35; " +
-                "-fx-text-fill: #e0e0e0; -fx-border-color: #00d4ff; -fx-border-width: 2; -fx-border-radius: 6;");
+                "-fx-text-fill: #000000; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 6;");
 
         VBox content = new VBox(10);
         content.setPadding(new Insets(20));
-        content.setStyle("-fx-background-color: #0f1433;");
+        content.setStyle("-fx-background-color: #f5f5f5;");
 
         Label typeLabel = createStyledLabel("ACCOUNT TYPE");
         content.getChildren().addAll(typeLabel, accountTypeCombo);
@@ -2019,7 +2019,7 @@ public class ModernBankingApp extends Application {
         alert.setTitle(title);
         alert.setHeaderText(header);
         alert.setContentText(content);
-        alert.getDialogPane().setStyle("-fx-background-color: #0f1433; -fx-text-fill: #e0e0e0;");
+        alert.getDialogPane().setStyle("-fx-background-color: #f5f5f5; -fx-text-fill: #000000;");
         alert.showAndWait();
     }
 

@@ -14,6 +14,7 @@ public class Customer implements Serializable {
     private String address;
     private String phoneNumber;
     private String email;
+    private String passwordHash;
     private LocalDate dateOfBirth;
     private Role role;
     private boolean approved;
@@ -28,6 +29,23 @@ public class Customer implements Serializable {
         this.address = address;
         this.phoneNumber = phoneNumber;
         this.email = email;
+        this.passwordHash = "";
+        this.dateOfBirth = LocalDate.now();
+        this.role = role;
+        this.approved = true;
+        this.suspended = false;
+        this.accounts = new ArrayList<>();
+    }
+    
+    public Customer(String customerId, String firstName, String surname, String address,
+                   String phoneNumber, String email, String passwordHash, Role role) {
+        this.customerId = customerId;
+        this.firstName = firstName;
+        this.surname = surname;
+        this.address = address;
+        this.phoneNumber = phoneNumber;
+        this.email = email;
+        this.passwordHash = passwordHash;
         this.dateOfBirth = LocalDate.now();
         this.role = role;
         this.approved = true;
@@ -88,12 +106,14 @@ public class Customer implements Serializable {
     public String getAddress() { return address; }
     public String getPhoneNumber() { return phoneNumber; }
     public String getEmail() { return email; }
+    public String getPasswordHash() { return passwordHash; }
     public LocalDate getDateOfBirth() { return dateOfBirth; }
     public Role getRole() { return role; }
     public List<Account> getAccounts() { return new ArrayList<>(accounts); }
     
     // Setters
     public void setEmail(String email) { this.email = email; }
+    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
     public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
     public void setRole(Role role) { this.role = role; }
