@@ -157,7 +157,7 @@ public class LoginController {
      */
     public boolean registerUser(String firstName, String lastName, String email, 
                                 String phone, String address) {
-        return registerUser(firstName, lastName, email, phone, address, Role.CUSTOMER);
+        return registerUser(firstName, lastName, email, phone, address, Role.CUSTOMER, null);
     }
 
     /**
@@ -165,6 +165,14 @@ public class LoginController {
      */
     public boolean registerUser(String firstName, String lastName, String email, 
                                 String phone, String address, Role role) {
+        return registerUser(firstName, lastName, email, phone, address, role, null);
+    }
+
+    /**
+     * Register a new user with specified role and password
+     */
+    public boolean registerUser(String firstName, String lastName, String email, 
+                                String phone, String address, Role role, String password) {
         if (firstName == null || firstName.isEmpty() || 
             lastName == null || lastName.isEmpty() ||
             email == null || email.isEmpty()) {
@@ -184,6 +192,13 @@ public class LoginController {
                                            address != null ? address : "", 
                                            phone != null ? phone : "", 
                                            email, role);
+        
+        // Hash and set password if provided
+        if (password != null && !password.isEmpty()) {
+            String passwordHash = com.banking.util.PasswordUtil.hashPassword(password);
+            newCustomer.setPasswordHash(passwordHash);
+        }
+        
         // By default, require admin approval for regular customers (except admin/teller)
         if (role == com.banking.main.Role.CUSTOMER) {
             newCustomer.setApproved(false);

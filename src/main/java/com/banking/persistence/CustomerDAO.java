@@ -19,8 +19,8 @@ public class CustomerDAO {
 
     // CREATE
     public boolean create(Customer customer) {
-        String sql = "INSERT INTO CUSTOMER (CUSTOMER_ID, FIRST_NAME, SURNAME, ADDRESS, PHONE_NUMBER, EMAIL, ROLE, APPROVED, SUSPENDED, DATE_OF_BIRTH) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO CUSTOMER (CUSTOMER_ID, FIRST_NAME, SURNAME, ADDRESS, PHONE_NUMBER, EMAIL, PASSWORD_HASH, ROLE, APPROVED, SUSPENDED, DATE_OF_BIRTH) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, customer.getCustomerId());
             pstmt.setString(2, customer.getFirstName());
@@ -28,10 +28,11 @@ public class CustomerDAO {
             pstmt.setString(4, customer.getAddress());
             pstmt.setString(5, customer.getPhoneNumber());
             pstmt.setString(6, customer.getEmail());
-            pstmt.setString(7, customer.getRole() != null ? customer.getRole().name() : "CUSTOMER");
-            pstmt.setInt(8, customer.isApproved() ? 1 : 0);
-            pstmt.setInt(9, customer.isSuspended() ? 1 : 0);
-            pstmt.setDate(10, java.sql.Date.valueOf(customer.getDateOfBirth())); // fully qualified
+            pstmt.setString(7, customer.getPasswordHash());
+            pstmt.setString(8, customer.getRole() != null ? customer.getRole().name() : "CUSTOMER");
+            pstmt.setInt(9, customer.isApproved() ? 1 : 0);
+            pstmt.setInt(10, customer.isSuspended() ? 1 : 0);
+            pstmt.setDate(11, java.sql.Date.valueOf(customer.getDateOfBirth())); // fully qualified
 
             int rows = pstmt.executeUpdate();
             if (rows > 0) {
@@ -72,6 +73,9 @@ public class CustomerDAO {
                 boolean approved = true;
                 try { approved = rs.getInt("APPROVED") == 1; } catch (Exception ex) { approved = true; }
 
+                String passwordHash = "";
+                try { passwordHash = rs.getString("PASSWORD_HASH"); } catch (Exception ex) { passwordHash = ""; }
+
                 Customer customer = new Customer(
                     rs.getString("CUSTOMER_ID"),
                     rs.getString("FIRST_NAME"),
@@ -79,6 +83,7 @@ public class CustomerDAO {
                     rs.getString("ADDRESS"),
                     rs.getString("PHONE_NUMBER"),
                     rs.getString("EMAIL"),
+                    passwordHash,
                     role
                 );
                 customer.setDateOfBirth(rs.getDate("DATE_OF_BIRTH").toLocalDate()); // LocalDate
@@ -127,6 +132,9 @@ public class CustomerDAO {
                 boolean approved = true;
                 try { approved = rs.getInt("APPROVED") == 1; } catch (Exception ex) { approved = true; }
 
+                String passwordHash = "";
+                try { passwordHash = rs.getString("PASSWORD_HASH"); } catch (Exception ex) { passwordHash = ""; }
+
                 Customer customer = new Customer(
                     rs.getString("CUSTOMER_ID"),
                     rs.getString("FIRST_NAME"),
@@ -134,6 +142,7 @@ public class CustomerDAO {
                     rs.getString("ADDRESS"),
                     rs.getString("PHONE_NUMBER"),
                     rs.getString("EMAIL"),
+                    passwordHash,
                     role
                 );
                 try { customer.setDateOfBirth(rs.getDate("DATE_OF_BIRTH").toLocalDate()); } catch (Exception ex) {}
@@ -173,6 +182,9 @@ public class CustomerDAO {
                 boolean approved = true;
                 try { approved = rs.getInt("APPROVED") == 1; } catch (Exception ex) { approved = true; }
 
+                String passwordHash = "";
+                try { passwordHash = rs.getString("PASSWORD_HASH"); } catch (Exception ex) { passwordHash = ""; }
+
                 Customer customer = new Customer(
                     rs.getString("CUSTOMER_ID"),
                     rs.getString("FIRST_NAME"),
@@ -180,6 +192,7 @@ public class CustomerDAO {
                     rs.getString("ADDRESS"),
                     rs.getString("PHONE_NUMBER"),
                     rs.getString("EMAIL"),
+                    passwordHash,
                     role
                 );
                 try { customer.setDateOfBirth(rs.getDate("DATE_OF_BIRTH").toLocalDate()); } catch (Exception ex) {}
@@ -201,7 +214,7 @@ public class CustomerDAO {
 
     // UPDATE
     public boolean update(Customer customer) {
-        String sql = "UPDATE CUSTOMER SET FIRST_NAME=?, SURNAME=?, ADDRESS=?, PHONE_NUMBER=?, EMAIL=?, DATE_OF_BIRTH=?, ROLE=?, APPROVED=?, SUSPENDED=? " +
+        String sql = "UPDATE CUSTOMER SET FIRST_NAME=?, SURNAME=?, ADDRESS=?, PHONE_NUMBER=?, EMAIL=?, PASSWORD_HASH=?, DATE_OF_BIRTH=?, ROLE=?, APPROVED=?, SUSPENDED=? " +
                      "WHERE CUSTOMER_ID=?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, customer.getFirstName());
@@ -209,11 +222,12 @@ public class CustomerDAO {
             pstmt.setString(3, customer.getAddress());
             pstmt.setString(4, customer.getPhoneNumber());
             pstmt.setString(5, customer.getEmail());
-            pstmt.setDate(6, java.sql.Date.valueOf(customer.getDateOfBirth()));
-            pstmt.setString(7, customer.getRole() != null ? customer.getRole().name() : "CUSTOMER");
-            pstmt.setInt(8, customer.isApproved() ? 1 : 0);
-            pstmt.setInt(9, customer.isSuspended() ? 1 : 0);
-            pstmt.setString(10, customer.getCustomerId());
+            pstmt.setString(6, customer.getPasswordHash());
+            pstmt.setDate(7, java.sql.Date.valueOf(customer.getDateOfBirth()));
+            pstmt.setString(8, customer.getRole() != null ? customer.getRole().name() : "CUSTOMER");
+            pstmt.setInt(9, customer.isApproved() ? 1 : 0);
+            pstmt.setInt(10, customer.isSuspended() ? 1 : 0);
+            pstmt.setString(11, customer.getCustomerId());
 
             int rows = pstmt.executeUpdate();
             if (rows > 0) {

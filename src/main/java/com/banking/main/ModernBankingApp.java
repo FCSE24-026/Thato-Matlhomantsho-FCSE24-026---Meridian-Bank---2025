@@ -68,7 +68,7 @@ public class ModernBankingApp extends Application {
             try {
                 com.banking.model.Customer existing = bank.getCustomerByEmail(email);
                 if (existing == null) {
-                    authController.registerUser(seedFirstNames[i], seedLastNames[i], email, seedPhones[i], "Meridian Bank Botswana", seedRoles.get(email));
+                    authController.registerUser(seedFirstNames[i], seedLastNames[i], email, seedPhones[i], "Meridian Bank Botswana", seedRoles.get(email), seedPasswords[i]);
                     if (i == 0) System.out.println("  Email: " + email + " | Password: " + seedPasswords[i]);
                 } else {
                     if (i == 0) System.out.println("  Email: " + email + " | Password: " + seedPasswords[i] + " (existing)");
