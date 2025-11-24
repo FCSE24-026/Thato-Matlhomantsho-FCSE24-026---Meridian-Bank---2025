@@ -624,7 +624,7 @@ public class ModernBankingApp extends Application {
         userActionColumn.setCellFactory(param -> new TableCell<Customer, Void>() {
             private final Button deleteBtn = new Button("Delete");
             {
-                deleteBtn.setStyle("-fx-padding: 5; -fx-font-size: 11; -fx-background-color: #ffffff; -fx-text-fill: white; -fx-cursor: hand;");
+                deleteBtn.setStyle("-fx-padding: 5; -fx-font-size: 11; -fx-background-color: #000000; -fx-text-fill: #ffffff; -fx-cursor: hand;");
                 deleteBtn.setOnAction(e -> {
                     Customer customer = getTableView().getItems().get(getIndex());
                     if (customer == null) return;
@@ -1255,7 +1255,7 @@ public class ModernBankingApp extends Application {
         accountActionColumn.setCellFactory(param -> new TableCell<Account, Void>() {
             private final Button deleteBtn = new Button("Delete");
             {
-                deleteBtn.setStyle("-fx-padding: 5; -fx-font-size: 11; -fx-background-color: #ffffff; -fx-text-fill: white; -fx-cursor: hand;");
+                deleteBtn.setStyle("-fx-padding: 5; -fx-font-size: 11; -fx-background-color: #000000; -fx-text-fill: #ffffff; -fx-cursor: hand;");
                 deleteBtn.setOnAction(e -> {
                     Account acc = getTableView().getItems().get(getIndex());
                     if (acc == null) return;
@@ -1696,16 +1696,17 @@ public class ModernBankingApp extends Application {
         HBox actionButtonsRow = new HBox(15);
         actionButtonsRow.setAlignment(Pos.CENTER_LEFT);
 
-        Button[] actionButtons = new Button[4];
-        String[] buttonLabels = {"👤 VIEW ACCOUNTS", "💸 TRANSFER", "📋 HISTORY", "✚ NEW ACCOUNT"};
+        Button[] actionButtons = new Button[5];
+        String[] buttonLabels = {"👤 VIEW ACCOUNTS", "💸 TRANSFER", "📋 HISTORY", "✚ NEW ACCOUNT", "👤 MY PROFILE"};
         String[] buttonStyles = {
+            "#000000",
             "#000000",
             "#000000",
             "#000000",
             "#000000"
         };
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 5; i++) {
             actionButtons[i] = new Button(buttonLabels[i]);
             actionButtons[i].setPrefWidth(160);
             actionButtons[i].setPrefHeight(50);
@@ -1717,6 +1718,7 @@ public class ModernBankingApp extends Application {
         actionButtons[1].setOnAction(e -> showTransferScreen());
         actionButtons[2].setOnAction(e -> showTransactionHistory());
         actionButtons[3].setOnAction(e -> showCreateAccountDialog());
+        actionButtons[4].setOnAction(e -> showProfileScreen());
 
         actionButtonsRow.getChildren().addAll(actionButtons);
 
@@ -2021,6 +2023,123 @@ public class ModernBankingApp extends Application {
         alert.setContentText(content);
         alert.getDialogPane().setStyle("-fx-background-color: #f5f5f5; -fx-text-fill: #000000;");
         alert.showAndWait();
+    }
+
+    private void showProfileScreen() {
+        if (currentUser == null) return;
+        Customer customer = authController.getCurrentCustomer();
+        if (customer == null) return;
+        
+        VBox mainContainer = new VBox(20);
+        mainContainer.setPadding(new Insets(40));
+        mainContainer.setStyle("-fx-background-color: #ffffff;");
+
+        Label titleLabel = new Label("MY PROFILE");
+        titleLabel.setStyle("-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #000000;");
+
+        VBox formBox = new VBox(15);
+        formBox.setStyle("-fx-background-color: #f5f5f5; -fx-border-color: #000000; " +
+                "-fx-border-width: 1; -fx-border-radius: 8; -fx-padding: 30;");
+
+        // Read-only info
+        Label idLabel = createStyledLabel("CUSTOMER ID");
+        TextField idField = createStyledTextField("");
+        idField.setText(customer.getCustomerId());
+        idField.setEditable(false);
+
+        Label roleLabel = createStyledLabel("ACCOUNT ROLE");
+        TextField roleField = createStyledTextField("");
+        roleField.setText(customer.getRole().toString());
+        roleField.setEditable(false);
+
+        // Editable fields
+        Label firstNameLabel = createStyledLabel("FIRST NAME");
+        TextField firstNameField = createStyledTextField("First Name");
+        firstNameField.setText(customer.getFirstName());
+
+        Label surnameLabel = createStyledLabel("SURNAME");
+        TextField surnameField = createStyledTextField("Surname");
+        surnameField.setText(customer.getSurname());
+
+        Label emailLabel = createStyledLabel("EMAIL");
+        TextField emailField = createStyledTextField("Email");
+        emailField.setText(customer.getEmail());
+
+        Label phoneLabel = createStyledLabel("PHONE");
+        TextField phoneField = createStyledTextField("Phone");
+        phoneField.setText(customer.getPhoneNumber());
+
+        Label addressLabel = createStyledLabel("ADDRESS");
+        TextField addressField = createStyledTextField("Address");
+        addressField.setText(customer.getAddress());
+
+        Label passwordLabel = createStyledLabel("NEW PASSWORD (leave empty to keep current)");
+        PasswordField passwordField = createStyledPasswordField("New password");
+
+        HBox buttonBox = new HBox(15);
+        buttonBox.setAlignment(Pos.CENTER);
+
+        Button saveButton = new Button("SAVE CHANGES");
+        saveButton.setPrefWidth(150);
+        saveButton.setPrefHeight(40);
+        saveButton.setStyle("-fx-background-color: #000000; -fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
+
+        Button backButton = new Button("BACK");
+        backButton.setPrefWidth(150);
+        backButton.setPrefHeight(40);
+        backButton.setStyle("-fx-background-color: #1a1f3a; -fx-text-fill: #000000; -fx-border-color: #000000; -fx-border-width: 2; -fx-border-radius: 6; -fx-cursor: hand;");
+
+        saveButton.setOnAction(e -> {
+            try {
+                customer.setEmail(emailField.getText());
+                customer.setPhoneNumber(phoneField.getText());
+                customer.setAddress(addressField.getText());
+
+                // Update password if provided
+                if (!passwordField.getText().isEmpty()) {
+                    String passwordError = com.banking.util.PasswordUtil.getPasswordValidationError(passwordField.getText());
+                    if (passwordError != null) {
+                        showAlert("✗ Error", "Invalid Password", passwordError, false);
+                        return;
+                    }
+                    String hashedPassword = com.banking.util.PasswordUtil.hashPassword(passwordField.getText());
+                    customer.setPasswordHash(hashedPassword);
+                }
+
+                // Persist customer updates
+                bank.updateCustomer(customer);
+                showAlert("✓ Success", "Profile Updated", "Your profile has been updated successfully.", true);
+                showDashboard();
+            } catch (Exception ex) {
+                showAlert("✗ Error", "Update Failed", "Could not update profile: " + ex.getMessage(), false);
+            }
+        });
+
+        backButton.setOnAction(e -> showDashboard());
+
+        buttonBox.getChildren().addAll(saveButton, backButton);
+
+        formBox.getChildren().addAll(
+            idLabel, idField,
+            roleLabel, roleField,
+            firstNameLabel, firstNameField,
+            surnameLabel, surnameField,
+            emailLabel, emailField,
+            phoneLabel, phoneField,
+            addressLabel, addressField,
+            passwordLabel, passwordField,
+            buttonBox
+        );
+
+        ScrollPane scrollPane = new ScrollPane(formBox);
+        scrollPane.setStyle("-fx-background-color: #ffffff; -fx-control-inner-background: #ffffff;");
+        scrollPane.setFitToWidth(true);
+
+        mainContainer.getChildren().addAll(titleLabel, scrollPane);
+
+        Scene scene = new Scene(mainContainer, 800, 750);
+        primaryStage.setTitle("FLECA - My Profile");
+        primaryStage.setScene(scene);
     }
 
     private TextField createStyledTextField(String prompt) {

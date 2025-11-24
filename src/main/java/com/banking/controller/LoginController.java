@@ -72,10 +72,23 @@ public class LoginController {
             System.out.println("✗ Username cannot be empty");
             return false;
         }
+        
+        if (password == null || password.isEmpty()) {
+            System.out.println("✗ Password cannot be empty");
+            return false;
+        }
 
         Customer customer = bank.getCustomerByEmail(username);
 
         if (customer != null) {
+            // Verify password using PasswordUtil
+            String storedHash = customer.getPasswordHash();
+            if (storedHash == null || storedHash.isEmpty() || 
+                !com.banking.util.PasswordUtil.verifyPassword(password, storedHash)) {
+                System.out.println("✗ Invalid password for: " + username);
+                return false;
+            }
+            
             // Prevent unapproved customers from logging in (but allow admin/teller)
             if (customer.getRole() == com.banking.main.Role.CUSTOMER && !customer.isApproved()) {
                 System.out.println("✗ Customer account pending approval: " + customer.getEmail());
@@ -87,10 +100,6 @@ public class LoginController {
             System.out.println("✓ Authentication successful for: " + 
                              customer.getFirstName() + " " + customer.getSurname());
                 try { bank.logAction(customer.getCustomerId(), customer.getEmail(), "LOGIN", "CUSTOMER", customer.getCustomerId(), "Successful login", "OK"); } catch (Exception ex) {}
-            if (password == null || password.isEmpty()) {
-                // Informational only — password handling not implemented
-                System.out.println("⚠ Warning: password verification not implemented; please add secure handling.");
-            }
             return true;
         }
 
