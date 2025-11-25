@@ -31,6 +31,23 @@ public class TransactionController {
             System.out.println("✓ Deposit processed successfully");
             // persist transaction and account state
             try {
+                // Find account owner for audit log
+                String ownerId = null; 
+                String ownerEmail = null;
+                for (Customer c : bank.getAllCustomers()) {
+                    for (Account a : bank.getAllAccountsForCustomer(c.getCustomerId())) {
+                        if (a.getAccountId().equals(account.getAccountId())) { 
+                            ownerId = c.getCustomerId(); 
+                            ownerEmail = c.getEmail(); 
+                            break; 
+                        }
+                    }
+                    if (ownerId != null) break;
+                }
+                
+                // Log to audit
+                bank.logAction(ownerId, ownerEmail, "DEPOSIT", "TRANSACTION", account.getAccountId(), "Amount: " + amount, "OK");
+                
                 String txnId = "TXN_" + java.util.UUID.randomUUID().toString();
                 Transaction txn = new Transaction(txnId, "DEPOSIT", amount, java.time.LocalDate.now(), account.getAccountNumber(), "SUCCESS");
                 bank.recordTransaction(txn);
@@ -68,6 +85,23 @@ public class TransactionController {
         if (success) {
             System.out.println("✓ Withdrawal processed successfully");
             try {
+                // Find account owner for audit log
+                String ownerId = null; 
+                String ownerEmail = null;
+                for (Customer c : bank.getAllCustomers()) {
+                    for (Account a : bank.getAllAccountsForCustomer(c.getCustomerId())) {
+                        if (a.getAccountId().equals(account.getAccountId())) { 
+                            ownerId = c.getCustomerId(); 
+                            ownerEmail = c.getEmail(); 
+                            break; 
+                        }
+                    }
+                    if (ownerId != null) break;
+                }
+                
+                // Log to audit
+                bank.logAction(ownerId, ownerEmail, "WITHDRAWAL", "TRANSACTION", account.getAccountId(), "Amount: " + amount, "OK");
+                
                 String txnId = "TXN_" + java.util.UUID.randomUUID().toString();
                 Transaction txn = new Transaction(txnId, "WITHDRAWAL", amount, java.time.LocalDate.now(), account.getAccountNumber(), "SUCCESS");
                 bank.recordTransaction(txn);

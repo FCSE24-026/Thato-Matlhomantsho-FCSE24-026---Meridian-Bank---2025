@@ -32,7 +32,7 @@ public class Customer implements Serializable {
         this.passwordHash = "";
         this.dateOfBirth = LocalDate.now();
         this.role = role;
-        this.approved = true;
+        this.approved = false;
         this.suspended = false;
         this.accounts = new ArrayList<>();
     }
@@ -48,7 +48,7 @@ public class Customer implements Serializable {
         this.passwordHash = passwordHash;
         this.dateOfBirth = LocalDate.now();
         this.role = role;
-        this.approved = true;
+        this.approved = false;
         this.suspended = false;
         this.accounts = new ArrayList<>();
     }

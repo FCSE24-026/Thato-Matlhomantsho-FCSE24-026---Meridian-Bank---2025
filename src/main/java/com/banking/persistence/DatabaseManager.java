@@ -20,8 +20,10 @@ public class DatabaseManager {
             "ADDRESS VARCHAR(255) NOT NULL," +
             "PHONE_NUMBER VARCHAR(20) NOT NULL," +
             "EMAIL VARCHAR(100) NOT NULL," +
+            "PASSWORD_HASH VARCHAR(255)," +
             "ROLE VARCHAR(20) DEFAULT 'CUSTOMER'," +
-            "APPROVED TINYINT(1) DEFAULT 1," +
+            "APPROVED TINYINT(1) DEFAULT 0," +
+            "SUSPENDED TINYINT(1) DEFAULT 0," +
             "DATE_OF_BIRTH DATE," +
             "CREATED_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP);",
         "CREATE TABLE IF NOT EXISTS ACCOUNT (" +
@@ -102,11 +104,15 @@ public class DatabaseManager {
             }
             // Ensure CUSTOMER has ROLE and APPROVED columns (for upgrades)
             try {
+                stmt.executeUpdate("ALTER TABLE CUSTOMER ADD COLUMN PASSWORD_HASH VARCHAR(255)");
+                System.out.println("✓ CUSTOMER.PASSWORD_HASH column added");
+            } catch (SQLException ignored) {}
+            try {
                 stmt.executeUpdate("ALTER TABLE CUSTOMER ADD COLUMN ROLE VARCHAR(20) DEFAULT 'CUSTOMER'");
                 System.out.println("✓ CUSTOMER.ROLE column added");
             } catch (SQLException ignored) {}
             try {
-                stmt.executeUpdate("ALTER TABLE CUSTOMER ADD COLUMN APPROVED TINYINT(1) DEFAULT 1");
+                stmt.executeUpdate("ALTER TABLE CUSTOMER ADD COLUMN APPROVED TINYINT(1) DEFAULT 0");
                 System.out.println("✓ CUSTOMER.APPROVED column added");
             } catch (SQLException ignored) {}
             try {

@@ -5,10 +5,7 @@ import com.banking.model.*;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import javafx.geometry.Insets;
-import javafx.geometry.*;
 
 public class ApplicationView extends Application {
     private ApplicationController appController;

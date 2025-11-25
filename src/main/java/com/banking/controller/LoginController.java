@@ -4,7 +4,6 @@ import com.banking.model.*;
 import com.banking.service.*;
 import com.banking.main.User;
 import com.banking.main.Role;
-import com.banking.util.PasswordUtil;
 
 // ============================================================================
 // 1. LOGIN CONTROLLER - Handles authentication

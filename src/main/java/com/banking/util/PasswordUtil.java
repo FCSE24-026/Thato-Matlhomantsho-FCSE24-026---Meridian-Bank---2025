@@ -1,23 +1,30 @@
 package com.banking.util;
 
+import java.security.MessageDigest;
+import java.util.Base64;
+
 /**
- * Utility class for password hashing using simple BCrypt alternative.
+ * Utility class for password hashing using SHA-256.
  * NOTE: For production, use org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
  */
 public class PasswordUtil {
 
     /**
-     * Hash a plain-text password (simplified for offline use)
+     * Hash a plain-text password using SHA-256
      * @param plainPassword The plain-text password
-     * @return Hashed password
+     * @return Hashed password (Base64 encoded SHA-256)
      */
     public static String hashPassword(String plainPassword) {
         if (plainPassword == null || plainPassword.isEmpty()) {
             throw new IllegalArgumentException("Password cannot be empty");
         }
-        // TODO: Replace with real BCrypt in production
-        // For now, use a simple hash for development
-        return plainPassword.hashCode() + ":" + plainPassword.length();
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hashedBytes = md.digest(plainPassword.getBytes());
+            return Base64.getEncoder().encodeToString(hashedBytes);
+        } catch (Exception e) {
+            throw new RuntimeException("Error hashing password", e);
+        }
     }
 
     /**
@@ -30,7 +37,7 @@ public class PasswordUtil {
         if (plainPassword == null || hashedPassword == null) {
             return false;
         }
-        // For development: simple verification
+        // For development: SHA-256 verification
         return hashPassword(plainPassword).equals(hashedPassword);
     }
 

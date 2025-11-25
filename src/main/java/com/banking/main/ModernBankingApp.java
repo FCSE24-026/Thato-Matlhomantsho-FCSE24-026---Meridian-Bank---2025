@@ -9,6 +9,7 @@ import javafx.geometry.Pos;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.text.Font;
 
 import com.banking.controller.LoginController;
 import com.banking.controller.AccountController;
@@ -31,9 +32,49 @@ public class ModernBankingApp extends Application {
     private User currentUser;
     private Bank bank;
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private Font patrickHandFont;
+    private Font patrickHandBold;
+
+    /**
+     * Recursively apply Patrick Hand font to all nodes in the scene graph
+     */
+    private void applyFontToAllNodes(javafx.scene.Node node) {
+        if (node instanceof javafx.scene.control.Labeled) {
+            javafx.scene.control.Labeled labeled = (javafx.scene.control.Labeled) node;
+            if (patrickHandFont != null) {
+                labeled.setFont(Font.font(patrickHandFont.getFamily(), 14));
+            }
+        } else if (node instanceof javafx.scene.control.TextInputControl) {
+            javafx.scene.control.TextInputControl textControl = (javafx.scene.control.TextInputControl) node;
+            if (patrickHandFont != null) {
+                textControl.setFont(Font.font(patrickHandFont.getFamily(), 12));
+            }
+        }
+        
+        if (node instanceof javafx.scene.Parent) {
+            javafx.scene.Parent parent = (javafx.scene.Parent) node;
+            for (javafx.scene.Node child : parent.getChildrenUnmodifiable()) {
+                applyFontToAllNodes(child);
+            }
+        }
+    }
 
     @Override
     public void start(Stage stage) {
+        // Load Patrick Hand font (from fonts directory in resources)
+        try {
+            String patrickHandPath = getClass().getResource("/fonts/PatrickHand-Regular.ttf").toExternalForm();
+            
+            this.patrickHandFont = Font.loadFont(patrickHandPath, 14);
+            this.patrickHandBold = Font.loadFont(patrickHandPath, 16);
+            
+            System.out.println("✓ Patrick Hand font loaded successfully");
+        } catch (Exception e) {
+            System.out.println("⚠ Patrick Hand font not found: " + e.getMessage());
+            this.patrickHandFont = Font.font("System", 14);
+            this.patrickHandBold = Font.font("System", 16);
+        }
+        
         this.primaryStage = stage;
         this.bank = new Bank("Meridian Bank");
         this.authController = new LoginController(bank);
@@ -44,6 +85,26 @@ public class ModernBankingApp extends Application {
         initializeSeedData();
         
         showLoginScreen();
+    }
+
+    private String getStylesheet() {
+        try {
+            return getClass().getResource("/banking-style.css").toExternalForm();
+        } catch (Exception e) {
+            System.out.println("Warning: Could not load stylesheet: " + e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Apply stylesheet and fonts to a scene
+     */
+    private void setupScene(Scene scene) {
+        String stylesheet = getStylesheet();
+        if (stylesheet != null) {
+            scene.getStylesheets().add(stylesheet);
+        }
+        applyFontToAllNodes(scene.getRoot());
     }
 
     private void initializeSeedData() {
@@ -61,7 +122,9 @@ public class ModernBankingApp extends Application {
         seedRoles.put("naledi.customer@bank.com", Role.CUSTOMER);
         seedRoles.put("simone.customer@bank.com", Role.CUSTOMER);
 
-        System.out.println("\n========== MERIDIAN BANK - SEED USER LOGIN CREDENTIALS ==========");
+        System.out.println("\n\n╔════════════════════════════════════════════════════════════════════╗");
+        System.out.println("║        MERIDIAN BANK - SEED USER LOGIN CREDENTIALS              ║");
+        System.out.println("╚════════════════════════════════════════════════════════════════════╝\n");
         System.out.println("ADMIN:\n");
         for (int i = 0; i < seedEmails.length; i++) {
             String email = seedEmails[i];
@@ -71,6 +134,11 @@ public class ModernBankingApp extends Application {
                     authController.registerUser(seedFirstNames[i], seedLastNames[i], email, seedPhones[i], "Meridian Bank Botswana", seedRoles.get(email), seedPasswords[i]);
                     if (i == 0) System.out.println("  Email: " + email + " | Password: " + seedPasswords[i]);
                 } else {
+                    // Update password if missing or empty
+                    if (existing.getPasswordHash() == null || existing.getPasswordHash().isEmpty()) {
+                        existing.setPasswordHash(com.banking.util.PasswordUtil.hashPassword(seedPasswords[i]));
+                        bank.updateCustomer(existing);
+                    }
                     if (i == 0) System.out.println("  Email: " + email + " | Password: " + seedPasswords[i] + " (existing)");
                 }
             } catch (Exception ex) {
@@ -87,7 +155,25 @@ public class ModernBankingApp extends Application {
             String email = seedEmails[i];
             System.out.println("  Email: " + email + " | Password: " + seedPasswords[i]);
         }
-        System.out.println("\n====================================================================\n");
+        System.out.println("");
+        System.out.println("╚═══════════════════════════════════════════════════════════════╝\n");
+        // Approve ONLY the seeded customers for testing (not all customers)
+        try {
+            for (int i = 3; i < seedEmails.length; i++) {
+                String email = seedEmails[i];
+                com.banking.model.Customer customer = bank.getCustomerByEmail(email);
+                if (customer != null && !customer.isApproved()) {
+                    // Only approve if it's one of our seeded customer emails
+                    if (email.equals("naledi.customer@bank.com") || email.equals("simone.customer@bank.com")) {
+                        customer.setApproved(true);
+                        bank.updateCustomer(customer);
+                        System.out.println("✓ Seeded customer approved: " + email);
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            System.out.println("⚠ Customer approval failed: " + ex.getMessage());
+        }
         // Ensure seeded administrative users have correct roles (fix existing DB rows from older runs)
         try {
             com.banking.model.Customer admin = bank.getCustomerByEmail("admin@bank.com");
@@ -149,10 +235,12 @@ public class ModernBankingApp extends Application {
         mainContainer.setStyle("-fx-background-color: #ffffff;");
 
         Label titleLabel = new Label("Meridian Bank");
-        titleLabel.setStyle("-fx-font-size: 48; -fx-font-weight: bold; -fx-text-fill: #000000;");
+        titleLabel.setFont(patrickHandBold != null ? Font.font(patrickHandBold.getFamily(), 64) : Font.font("System", 64));
+        titleLabel.setStyle("-fx-text-fill: #000000;");
         
         Label subtitleLabel = new Label("Banking System");
-        subtitleLabel.setStyle("-fx-font-size: 16; -fx-text-fill: #666666; -fx-letter-spacing: 2;");
+        subtitleLabel.setFont(patrickHandFont != null ? Font.font(patrickHandFont.getFamily(), 24) : Font.font("System", 24));
+        subtitleLabel.setStyle("-fx-text-fill: #666666; -fx-letter-spacing: 2;");
 
         Separator sep1 = new Separator();
         sep1.setStyle("-fx-border-color: rgba(0,0,0,0.2); -fx-border-width: 1;");
@@ -251,6 +339,7 @@ public class ModernBankingApp extends Application {
         mainContainer.getChildren().addAll(titleLabel, subtitleLabel, sep1, formBox);
 
         Scene scene = new Scene(mainContainer, 700, 700);
+        setupScene(scene);
         primaryStage.setTitle("MERIDIAN BANK - Professional Banking System");
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -326,12 +415,13 @@ public class ModernBankingApp extends Application {
             lastNameField.getText().trim(),
             emailField.getText().trim(),
             phoneField.getText().trim(),
-            "")) {
-                messageLabel.setText("✓ Registration successful! Returning to login...");
+            "", com.banking.main.Role.CUSTOMER, pwd)) {
+                messageLabel.setText("✓ Registration successful!");
                 messageLabel.setStyle("-fx-text-fill: #000000; -fx-font-size: 11; -fx-padding: 10; " +
                         "-fx-background-color: rgba(26,188,156,0.1); -fx-border-radius: 4;");
+                showAlert("Registration Successful", "Account Created", "Your account has been created successfully!\n\nYour account is pending approval by an administrator.\nYou will receive confirmation once approved.", true);
                 try {
-                    Thread.sleep(1500);
+                    Thread.sleep(1000);
                     showLoginScreen();
                 } catch (InterruptedException ex) {
                     showLoginScreen();
@@ -340,6 +430,7 @@ public class ModernBankingApp extends Application {
                 messageLabel.setText("✗ Registration failed. Check your input or duplicate username.");
                 messageLabel.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 11; -fx-padding: 10; " +
                         "-fx-background-color: rgba(231,76,60,0.1); -fx-border-radius: 4;");
+                showAlert("Registration Failed", "Error", "Registration could not be completed. Please check your input and try again.", false);
             }
         });
 
@@ -373,7 +464,8 @@ public class ModernBankingApp extends Application {
         scrollPane.setFitToWidth(true);
 
         Scene scene = new Scene(scrollPane, 700, 750);
-        primaryStage.setTitle("FLECA - Register");
+        setupScene(scene);
+        primaryStage.setTitle("Meridian Bank - Register");
         primaryStage.setScene(scene);
     }
 
@@ -401,7 +493,8 @@ public class ModernBankingApp extends Application {
         headerBox.setAlignment(Pos.CENTER_LEFT);
 
         Label welcomeLabel = new Label("🔐 ADMIN PANEL - " + currentUser.getUsername().toUpperCase());
-        welcomeLabel.setStyle("-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
+        welcomeLabel.setFont(patrickHandBold != null ? Font.font(patrickHandBold.getFamily(), 20) : Font.font("System", 20));
+        welcomeLabel.setStyle("-fx-text-fill: #ffffff;");
 
         HBox spacer = new HBox();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -423,10 +516,15 @@ public class ModernBankingApp extends Application {
         contentPanel.setStyle("-fx-background-color: #ffffff;");
 
         Label titleLabel = new Label("ADMINISTRATOR FUNCTIONS");
-        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #000000; -fx-letter-spacing: 2;");
+        titleLabel.setFont(patrickHandBold != null ? Font.font(patrickHandBold.getFamily(), 18) : Font.font("System", 18));
+        titleLabel.setStyle("-fx-text-fill: #000000; -fx-letter-spacing: 2;");
+        titleLabel.setAlignment(Pos.CENTER);
 
-        HBox buttonRowBox = new HBox(15);
-        buttonRowBox.setAlignment(Pos.CENTER_LEFT);
+        VBox buttonContainerBox = new VBox(15);
+        buttonContainerBox.setAlignment(Pos.CENTER);
+
+        HBox buttonRowBox1 = new HBox(15);
+        buttonRowBox1.setAlignment(Pos.CENTER);
 
         Button viewUsersButton = new Button("👥 VIEW ALL USERS");
         viewUsersButton.setPrefWidth(180);
@@ -449,6 +547,11 @@ public class ModernBankingApp extends Application {
                 "-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
         manageAccountsButton.setOnAction(e -> showManageAccountsScreen());
 
+        buttonRowBox1.getChildren().addAll(viewUsersButton, approveRegistrationsButton, manageAccountsButton);
+
+        HBox buttonRowBox2 = new HBox(15);
+        buttonRowBox2.setAlignment(Pos.CENTER);
+
         Button systemStatsButton = new Button("📊 SYSTEM STATISTICS");
         systemStatsButton.setPrefWidth(180);
         systemStatsButton.setPrefHeight(50);
@@ -470,12 +573,15 @@ public class ModernBankingApp extends Application {
             "-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
         createTellerButton.setOnAction(e -> showCreateTellerScreen());
 
-        buttonRowBox.getChildren().addAll(viewUsersButton, approveRegistrationsButton, manageAccountsButton, systemStatsButton, auditLogButton, createTellerButton);
-        contentPanel.getChildren().addAll(titleLabel, buttonRowBox);
+        buttonRowBox2.getChildren().addAll(systemStatsButton, auditLogButton, createTellerButton);
+
+        buttonContainerBox.getChildren().addAll(buttonRowBox1, buttonRowBox2);
+        contentPanel.getChildren().addAll(titleLabel, buttonContainerBox);
 
         mainContainer.getChildren().addAll(headerBox, contentPanel);
 
         Scene scene = new Scene(mainContainer, 900, 400);
+        setupScene(scene);
         primaryStage.setTitle("Meridian Bank - Admin Dashboard");
         primaryStage.setScene(scene);
     }
@@ -493,7 +599,8 @@ public class ModernBankingApp extends Application {
         headerBox.setAlignment(Pos.CENTER_LEFT);
 
         Label welcomeLabel = new Label("📋 TELLER PANEL - " + currentUser.getUsername().toUpperCase());
-        welcomeLabel.setStyle("-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
+        welcomeLabel.setFont(patrickHandBold != null ? Font.font(patrickHandBold.getFamily(), 20) : Font.font("System", 20));
+        welcomeLabel.setStyle("-fx-text-fill: #ffffff;");
 
         HBox spacer = new HBox();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -515,10 +622,15 @@ public class ModernBankingApp extends Application {
         contentPanel.setStyle("-fx-background-color: #ffffff;");
 
         Label titleLabel = new Label("TELLER OPERATIONS");
-        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #000000; -fx-letter-spacing: 2;");
+        titleLabel.setFont(patrickHandBold != null ? Font.font(patrickHandBold.getFamily(), 18) : Font.font("System", 18));
+        titleLabel.setStyle("-fx-text-fill: #000000; -fx-letter-spacing: 2;");
+        titleLabel.setAlignment(Pos.CENTER);
+
+        VBox buttonContainerBox = new VBox(15);
+        buttonContainerBox.setAlignment(Pos.CENTER);
 
         HBox buttonRowBox = new HBox(15);
-        buttonRowBox.setAlignment(Pos.CENTER_LEFT);
+        buttonRowBox.setAlignment(Pos.CENTER);
 
     Button processTransactionButton = new Button("💳 PROCESS TRANSACTION");
         processTransactionButton.setPrefWidth(180);
@@ -534,19 +646,21 @@ public class ModernBankingApp extends Application {
                 "-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
     openAccountButton.setOnAction(e -> showOpenAccountScreen());
 
-    Button verifyCustomerButton = new Button("🔍 VERIFY CUSTOMER");
+    Button verifyCustomerButton = new Button("✏ EDIT CUSTOMER");
         verifyCustomerButton.setPrefWidth(180);
         verifyCustomerButton.setPrefHeight(50);
         verifyCustomerButton.setStyle("-fx-background-color: #000000; " +
                 "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand; -fx-font-size: 11;");
-    verifyCustomerButton.setOnAction(e -> showVerifyCustomerScreen());
+    verifyCustomerButton.setOnAction(e -> showEditCustomerScreen());
 
         buttonRowBox.getChildren().addAll(processTransactionButton, openAccountButton, verifyCustomerButton);
-        contentPanel.getChildren().addAll(titleLabel, buttonRowBox);
+        buttonContainerBox.getChildren().add(buttonRowBox);
+        contentPanel.getChildren().addAll(titleLabel, buttonContainerBox);
 
         mainContainer.getChildren().addAll(headerBox, contentPanel);
 
         Scene scene = new Scene(mainContainer, 900, 400);
+        setupScene(scene);
         primaryStage.setTitle("Meridian Bank - Teller Dashboard");
         primaryStage.setScene(scene);
     }
@@ -680,10 +794,12 @@ public class ModernBankingApp extends Application {
         mainContainer.getChildren().addAll(headerBox, contentPanel);
 
         Scene scene = new Scene(mainContainer, 1000, 600);
+        setupScene(scene);
         primaryStage.setTitle("Meridian Bank - View All Users");
         primaryStage.setScene(scene);
     }
 
+    @SuppressWarnings("unchecked")
     private void showApproveRegistrationsScreen() {
         if (!requireRole(Role.ADMIN)) return;
         VBox mainContainer = new VBox(15);
@@ -803,6 +919,7 @@ public class ModernBankingApp extends Application {
         mainContainer.getChildren().addAll(headerBox, contentPanel);
 
         Scene scene = new Scene(mainContainer, 1000, 600);
+        setupScene(scene);
         primaryStage.setTitle("Meridian Bank - Approve Registrations");
         primaryStage.setScene(scene);
     }
@@ -980,8 +1097,11 @@ public class ModernBankingApp extends Application {
             targetAccountCombo.setVisible("Transfer".equals(op));
         });
 
-        Button submitBtn = new Button("Submit");
-        submitBtn.setStyle("-fx-background-color: #000000; -fx-text-fill: white; -fx-font-weight: bold;");
+        Button submitBtn = new Button("✓ PROCESS TRANSACTION");
+        submitBtn.setPrefWidth(200);
+        submitBtn.setPrefHeight(45);
+        submitBtn.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; " +
+                "-fx-font-size: 12; -fx-border-radius: 6; -fx-cursor: hand; -fx-padding: 10;");
         submitBtn.setOnAction(e -> {
             Customer cust = customerCombo.getValue();
             Account acc = accountCombo.getValue();
@@ -1016,10 +1136,22 @@ public class ModernBankingApp extends Application {
             }
         });
 
-        contentPanel.getChildren().addAll(titleLabel, customerCombo, accountCombo, opCombo, amountField, searchTargetField, targetAccountCombo, ownerPreview, submitBtn);
-        mainContainer.getChildren().addAll(headerBox, contentPanel);
+        HBox buttonBox = new HBox(15);
+        buttonBox.setAlignment(Pos.CENTER);
+        buttonBox.setPadding(new Insets(20, 0, 0, 0));
+        buttonBox.getChildren().add(submitBtn);
 
-        Scene scene = new Scene(mainContainer, 900, 500);
+        contentPanel.getChildren().addAll(titleLabel, customerCombo, accountCombo, opCombo, amountField, searchTargetField, targetAccountCombo, ownerPreview, buttonBox);
+        
+        // Wrap content in ScrollPane to ensure all fields are accessible
+        ScrollPane scrollPane = new ScrollPane(contentPanel);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background-color: #ffffff;");
+        
+        mainContainer.getChildren().addAll(headerBox, scrollPane);
+
+        Scene scene = new Scene(mainContainer, 900, 650);
+        setupScene(scene);
         primaryStage.setTitle("Meridian Bank - Process Transaction");
         primaryStage.setScene(scene);
     }
@@ -1059,10 +1191,17 @@ public class ModernBankingApp extends Application {
         VBox contentPanel = new VBox(10);
         contentPanel.setPadding(new Insets(20));
         contentPanel.setStyle("-fx-background-color: #ffffff;");
+        contentPanel.setAlignment(Pos.TOP_CENTER);
+
+        VBox formBox = new VBox(12);
+        formBox.setPadding(new Insets(15));
+        formBox.setStyle("-fx-border-color: #cccccc; -fx-border-width: 1; -fx-border-radius: 6; -fx-max-width: 400;");
+        formBox.setAlignment(Pos.CENTER);
 
         ComboBox<Customer> customerCombo = new ComboBox<>();
         customerCombo.getItems().addAll(bank.getAllCustomers());
         customerCombo.setPromptText("Select Customer");
+        customerCombo.setPrefWidth(350);
         customerCombo.setConverter(new javafx.util.StringConverter<Customer>(){
             @Override public String toString(Customer c) { return c == null ? "" : c.getFirstName() + " " + c.getSurname() + " (" + c.getEmail() + ")"; }
             @Override public Customer fromString(String string) { return null; }
@@ -1071,18 +1210,22 @@ public class ModernBankingApp extends Application {
         ComboBox<String> typeCombo = new ComboBox<>();
         typeCombo.getItems().addAll("Savings", "Investment", "Cheque");
         typeCombo.setValue("Savings");
+        typeCombo.setPrefWidth(350);
 
         TextField initialDepositField = new TextField();
         initialDepositField.setPromptText("Initial deposit (for Investment)");
         initialDepositField.setVisible(false);
+        initialDepositField.setPrefWidth(350);
 
         TextField employerField = new TextField();
         employerField.setPromptText("Employer Name (for Cheque)");
         employerField.setVisible(false);
+        employerField.setPrefWidth(350);
 
         TextField employerAddressField = new TextField();
         employerAddressField.setPromptText("Employer Address (for Cheque)");
         employerAddressField.setVisible(false);
+        employerAddressField.setPrefWidth(350);
 
         typeCombo.setOnAction(e -> {
             String t = typeCombo.getValue();
@@ -1091,8 +1234,9 @@ public class ModernBankingApp extends Application {
             employerAddressField.setVisible("Cheque".equals(t));
         });
 
-        Button createBtn = new Button("Create Account");
-        createBtn.setStyle("-fx-background-color: #000000; -fx-text-fill: white; -fx-font-weight: bold;");
+        Button createBtn = new Button("✓ CREATE ACCOUNT");
+        createBtn.setPrefWidth(150);
+        createBtn.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10;");
         createBtn.setOnAction(e -> {
             Customer c = customerCombo.getValue();
             if (c == null) { showAlert("Error", "No customer", "Select a customer", false); return; }
@@ -1114,11 +1258,146 @@ public class ModernBankingApp extends Application {
             else showAlert("Failure", "Could not create account", "Check input or constraints", false);
         });
 
-        contentPanel.getChildren().addAll(titleLabel, customerCombo, typeCombo, initialDepositField, employerField, employerAddressField, createBtn);
+        formBox.getChildren().addAll(
+            new Label("Select Customer"), customerCombo,
+            new Label("Account Type"), typeCombo, 
+            initialDepositField, 
+            employerField, 
+            employerAddressField,
+            createBtn
+        );
+
+        contentPanel.getChildren().addAll(new Label("CREATE NEW ACCOUNT"), formBox);
         mainContainer.getChildren().addAll(headerBox, contentPanel);
 
         Scene scene = new Scene(mainContainer, 900, 500);
+        setupScene(scene);
         primaryStage.setTitle("Meridian Bank - Open Account");
+        primaryStage.setScene(scene);
+    }
+
+    private void showEditCustomerScreen() {
+        if (!requireRole(Role.TELLER)) return;
+        VBox mainContainer = new VBox(12);
+        mainContainer.setPadding(new Insets(0));
+        mainContainer.setStyle("-fx-background-color: #ffffff;");
+
+        HBox headerBox = new HBox(20);
+        headerBox.setPadding(new Insets(25));
+        headerBox.setStyle("-fx-background-color: #000000; " +
+                "-fx-border-color: #ffffff; -fx-border-width: 0 0 2 0;");
+        headerBox.setAlignment(Pos.CENTER_LEFT);
+
+        Label titleLabel = new Label("✏ EDIT CUSTOMER");
+        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
+
+        HBox spacer = new HBox();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button backButton = new Button("← BACK");
+        backButton.setPrefWidth(100);
+        backButton.setPrefHeight(40);
+        backButton.setStyle("-fx-background-color: #000000; " +
+                "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
+        backButton.setOnAction(e -> showTellerDashboard());
+
+        headerBox.getChildren().addAll(titleLabel, spacer, backButton);
+
+        VBox contentPanel = new VBox(12);
+        contentPanel.setPadding(new Insets(20));
+        contentPanel.setStyle("-fx-background-color: #ffffff;");
+
+        TextField searchEmailField = new TextField();
+        searchEmailField.setPromptText("Search by email");
+
+        TextField searchIdField = new TextField();
+        searchIdField.setPromptText("Or search by Customer ID");
+
+        Button searchBtn = new Button("Search Customer");
+        searchBtn.setStyle("-fx-background-color: #000000; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8;");
+
+        VBox editFormBox = new VBox(10);
+        editFormBox.setVisible(false);
+        editFormBox.setStyle("-fx-border-color: #cccccc; -fx-border-width: 1; -fx-padding: 15; -fx-border-radius: 6;");
+
+        TextField phoneField = new TextField();
+        phoneField.setPromptText("Phone Number");
+
+        TextField addressField = new TextField();
+        addressField.setPromptText("Address");
+
+        Label emailDisplayLabel = new Label();
+        emailDisplayLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #000000;");
+
+        Button saveBtn = new Button("✓ SAVE CHANGES");
+        saveBtn.setPrefWidth(150);
+        saveBtn.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10;");
+
+        final Customer[] selectedCustomer = {null};
+
+        searchBtn.setOnAction(e -> {
+            String email = searchEmailField.getText();
+            String cid = searchIdField.getText();
+            Customer found = null;
+            if (email != null && !email.isEmpty()) found = bank.getCustomerByEmail(email);
+            if (found == null && cid != null && !cid.isEmpty()) found = bank.getCustomerById(cid);
+            
+            if (found == null) {
+                showAlert("Not Found", "Customer not found", "Please check your search criteria", false);
+                editFormBox.setVisible(false);
+                return;
+            }
+            
+            selectedCustomer[0] = found;
+            phoneField.setText(found.getPhoneNumber());
+            addressField.setText(found.getAddress());
+            emailDisplayLabel.setText("Email: " + found.getEmail());
+            editFormBox.setVisible(true);
+        });
+
+        saveBtn.setOnAction(e -> {
+            if (selectedCustomer[0] == null) {
+                showAlert("Error", "No customer selected", "Please search for a customer first", false);
+                return;
+            }
+            
+            selectedCustomer[0].setPhoneNumber(phoneField.getText());
+            selectedCustomer[0].setAddress(addressField.getText());
+            
+            if (bank.updateCustomer(selectedCustomer[0])) {
+                showAlert("Success", "Customer Updated", "Customer information has been saved successfully", true);
+                searchEmailField.clear();
+                searchIdField.clear();
+                editFormBox.setVisible(false);
+            } else {
+                showAlert("Error", "Save Failed", "Could not save customer information", false);
+            }
+        });
+
+        editFormBox.getChildren().addAll(
+            emailDisplayLabel,
+            new Label("Phone Number"), phoneField,
+            new Label("Address"), addressField,
+            saveBtn
+        );
+
+        ScrollPane scrollPane = new ScrollPane(contentPanel);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background-color: #ffffff;");
+
+        contentPanel.getChildren().addAll(
+            new Label("Search Customer"), 
+            searchEmailField, 
+            searchIdField, 
+            searchBtn, 
+            editFormBox
+        );
+
+        mainContainer.getChildren().addAll(headerBox, scrollPane);
+
+        Scene scene = new Scene(mainContainer, 900, 650);
+        setupScene(scene);
+        primaryStage.setTitle("Meridian Bank - Edit Customer");
         primaryStage.setScene(scene);
     }
 
@@ -1186,6 +1465,7 @@ public class ModernBankingApp extends Application {
         mainContainer.getChildren().addAll(headerBox, contentPanel);
 
         Scene scene = new Scene(mainContainer, 900, 500);
+        setupScene(scene);
         primaryStage.setTitle("Meridian Bank - Verify Customer");
         primaryStage.setScene(scene);
     }
@@ -1321,6 +1601,7 @@ public class ModernBankingApp extends Application {
         mainContainer.getChildren().addAll(headerBox, contentPanel);
 
         Scene scene = new Scene(mainContainer, 1000, 600);
+        setupScene(scene);
         primaryStage.setTitle("Meridian Bank - Manage Accounts");
         primaryStage.setScene(scene);
     }
@@ -1428,10 +1709,12 @@ public class ModernBankingApp extends Application {
         mainContainer.getChildren().addAll(headerBox, scrollPane);
 
         Scene scene = new Scene(mainContainer, 1000, 700);
+        setupScene(scene);
         primaryStage.setTitle("Meridian Bank - System Statistics");
         primaryStage.setScene(scene);
     }
 
+    @SuppressWarnings("unchecked")
     private void showAuditLogScreen() {
         if (!requireRole(Role.ADMIN)) return;
         VBox mainContainer = new VBox(12);
@@ -1501,6 +1784,7 @@ public class ModernBankingApp extends Application {
         mainContainer.getChildren().addAll(header, searchField, table);
 
         Scene scene = new Scene(mainContainer, 1100, 600);
+        setupScene(scene);
         primaryStage.setTitle("Meridian Bank - Audit Logs");
         primaryStage.setScene(scene);
     }
@@ -1642,6 +1926,7 @@ public class ModernBankingApp extends Application {
         mainContainer.getChildren().addAll(headerBox, contentPanel);
 
         Scene scene = new Scene(mainContainer, 700, 750);
+        setupScene(scene);
         primaryStage.setTitle("Meridian Bank - Create Teller");
         primaryStage.setScene(scene);
     }
@@ -1660,14 +1945,17 @@ public class ModernBankingApp extends Application {
 
         VBox headerInfoBox = new VBox(5);
         Label welcomeLabel = new Label("Welcome back, " + currentUser.getUsername().toUpperCase());
-        welcomeLabel.setStyle("-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
+        welcomeLabel.setFont(patrickHandBold != null ? Font.font(patrickHandBold.getFamily(), 20) : Font.font("System", 20));
+        welcomeLabel.setStyle("-fx-text-fill: #ffffff;");
         
         Label balanceLabel = new Label("ACCOUNT BALANCE");
-        balanceLabel.setStyle("-fx-font-size: 10; -fx-text-fill: #cccccc; -fx-letter-spacing: 1;");
+        balanceLabel.setFont(patrickHandFont != null ? Font.font(patrickHandFont.getFamily(), 10) : Font.font("System", 10));
+        balanceLabel.setStyle("-fx-text-fill: #cccccc; -fx-letter-spacing: 1;");
 
     double totalBalance = accountController.getTotalBalance(currentUser.getUserId());
         Label amountLabel = new Label("BWP" + String.format("%.2f", totalBalance));
-        amountLabel.setStyle("-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #000000;");
+        amountLabel.setFont(patrickHandBold != null ? Font.font(patrickHandBold.getFamily(), 32) : Font.font("System", 32));
+        amountLabel.setStyle("-fx-text-fill: #000000;");
 
         headerInfoBox.getChildren().addAll(welcomeLabel, balanceLabel, amountLabel);
 
@@ -1691,10 +1979,15 @@ public class ModernBankingApp extends Application {
         actionsPanel.setStyle("-fx-background-color: #ffffff;");
 
         Label actionsTitle = new Label("QUICK ACTIONS");
-        actionsTitle.setStyle("-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #000000; -fx-letter-spacing: 2;");
+        actionsTitle.setFont(patrickHandBold != null ? Font.font(patrickHandBold.getFamily(), 14) : Font.font("System", 14));
+        actionsTitle.setStyle("-fx-text-fill: #000000; -fx-letter-spacing: 2;");
+        actionsTitle.setAlignment(Pos.CENTER);
+
+        VBox actionButtonsContainer = new VBox(15);
+        actionButtonsContainer.setAlignment(Pos.CENTER);
 
         HBox actionButtonsRow = new HBox(15);
-        actionButtonsRow.setAlignment(Pos.CENTER_LEFT);
+        actionButtonsRow.setAlignment(Pos.CENTER);
 
         Button[] actionButtons = new Button[5];
         String[] buttonLabels = {"👤 VIEW ACCOUNTS", "💸 TRANSFER", "📋 HISTORY", "✚ NEW ACCOUNT", "👤 MY PROFILE"};
@@ -1721,13 +2014,15 @@ public class ModernBankingApp extends Application {
         actionButtons[4].setOnAction(e -> showProfileScreen());
 
         actionButtonsRow.getChildren().addAll(actionButtons);
+        actionButtonsContainer.getChildren().add(actionButtonsRow);
 
-        actionsPanel.getChildren().addAll(actionsTitle, actionButtonsRow);
+        actionsPanel.getChildren().addAll(actionsTitle, actionButtonsContainer);
 
         mainContainer.getChildren().addAll(headerBox, actionsPanel);
 
         Scene scene = new Scene(mainContainer, 900, 400);
-        primaryStage.setTitle("FLECA - Dashboard");
+        setupScene(scene);
+        primaryStage.setTitle("Meridian Bank - Customer Dashboard");
         primaryStage.setScene(scene);
     }
 
@@ -1769,7 +2064,7 @@ public class ModernBankingApp extends Application {
                 HBox spacer2 = new HBox();
                 HBox.setHgrow(spacer2, Priority.ALWAYS);
 
-                Label balanceLabel = new Label("$" + String.format("%.2f", account.getBalance()));
+                Label balanceLabel = new Label("BWP " + String.format("%.2f", account.getBalance()));
                 balanceLabel.setStyle("-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #000000;");
 
                 cardBox.getChildren().addAll(cardInfo, spacer2, balanceLabel);
@@ -1796,7 +2091,8 @@ public class ModernBankingApp extends Application {
         mainContainer.getChildren().addAll(titleLabel, scrollPane, bottomBox);
 
         Scene scene = new Scene(mainContainer, 800, 650);
-        primaryStage.setTitle("FLECA - My Accounts");
+        setupScene(scene);
+        primaryStage.setTitle("Meridian Bank - My Accounts");
         primaryStage.setScene(scene);
     }
 
@@ -1804,14 +2100,17 @@ public class ModernBankingApp extends Application {
         VBox mainContainer = new VBox(20);
         mainContainer.setPadding(new Insets(40));
         mainContainer.setStyle("-fx-background-color: #ffffff;");
+        mainContainer.setAlignment(Pos.TOP_CENTER);
 
         Label titleLabel = new Label("FUND TRANSFER");
         titleLabel.setStyle("-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #000000;");
+        titleLabel.setAlignment(Pos.CENTER);
 
         VBox formBox = new VBox(15);
         formBox.setStyle("-fx-background-color: #f5f5f5; -fx-border-color: #000000; " +
                 "-fx-border-width: 1; -fx-border-radius: 8; -fx-padding: 30; " +
-                "-fx-effect: dropshadow(gaussian, rgba(0,212,255,0.15), 10, 0, 0, 2);");
+                "-fx-effect: dropshadow(gaussian, rgba(0,212,255,0.15), 10, 0, 0, 2); -fx-max-width: 400;");
+        formBox.setAlignment(Pos.CENTER);
 
     List<Account> accounts = accountController.getUserAccounts(currentUser.getUserId());
 
@@ -1819,11 +2118,13 @@ public class ModernBankingApp extends Application {
         ComboBox<Account> toCombo = new ComboBox<>();
         fromCombo.getItems().addAll(accounts);
         toCombo.getItems().addAll(accounts);
-        fromCombo.setPrefWidth(300);
-        toCombo.setPrefWidth(300);
+        fromCombo.setPrefWidth(350);
+        toCombo.setPrefWidth(350);
 
         TextField amountField = createStyledTextField("Enter amount");
+        amountField.setPrefWidth(350);
         TextField descriptionField = createStyledTextField("Transfer description (optional)");
+        descriptionField.setPrefWidth(350);
 
         Label messageLabel = new Label();
         messageLabel.setWrapText(true);
@@ -1832,10 +2133,10 @@ public class ModernBankingApp extends Application {
         HBox buttonBox = new HBox(15);
         buttonBox.setAlignment(Pos.CENTER);
 
-        Button transferButton = new Button("EXECUTE TRANSFER");
+        Button transferButton = new Button("✓ EXECUTE TRANSFER");
         transferButton.setPrefWidth(150);
         transferButton.setPrefHeight(40);
-        transferButton.setStyle("-fx-background-color: #000000; " +
+        transferButton.setStyle("-fx-background-color: #27ae60; " +
                 "-fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 6; -fx-cursor: hand;");
 
         Button cancelButton = new Button("CANCEL");
@@ -1902,7 +2203,8 @@ public class ModernBankingApp extends Application {
         mainContainer.getChildren().addAll(titleLabel, formBox);
 
         Scene scene = new Scene(mainContainer, 700, 700);
-        primaryStage.setTitle("FLECA - Transfer");
+        setupScene(scene);
+        primaryStage.setTitle("Meridian Bank - Transfer");
         primaryStage.setScene(scene);
     }
 
@@ -1971,7 +2273,8 @@ public class ModernBankingApp extends Application {
         mainContainer.getChildren().addAll(titleLabel, scrollPane, bottomBox);
 
         Scene scene = new Scene(mainContainer, 800, 650);
-        primaryStage.setTitle("FLECA - Transactions");
+        setupScene(scene);
+        primaryStage.setTitle("Meridian Bank - Transactions");
         primaryStage.setScene(scene);
     }
 
@@ -2138,7 +2441,8 @@ public class ModernBankingApp extends Application {
         mainContainer.getChildren().addAll(titleLabel, scrollPane);
 
         Scene scene = new Scene(mainContainer, 800, 750);
-        primaryStage.setTitle("FLECA - My Profile");
+        setupScene(scene);
+        primaryStage.setTitle("Meridian Bank - My Profile");
         primaryStage.setScene(scene);
     }
 
