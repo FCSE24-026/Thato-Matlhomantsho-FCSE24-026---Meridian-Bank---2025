@@ -9,14 +9,16 @@
 
 ## Table of Contents
 1. [Executive Summary](#executive-summary)
-2. [Architecture Overview](#architecture-overview)
-3. [Core Components](#core-components)
-4. [Key Features](#key-features)
-5. [Database Design](#database-design)
-6. [Authentication & Authorization](#authentication--authorization)
-7. [Implementation Details](#implementation-details)
-8. [Testing & Deployment](#testing--deployment)
-9. [Technical Stack](#technical-stack)
+2. [OOAD Principles](#ooad-principles)
+3. [User Credentials](#user-credentials)
+4. [Architecture Overview](#architecture-overview)
+5. [Core Components](#core-components)
+6. [Key Features](#key-features)
+7. [Database Design](#database-design)
+8. [Authentication & Authorization](#authentication--authorization)
+9. [Implementation Details](#implementation-details)
+10. [Testing & Deployment](#testing--deployment)
+11. [Technical Stack](#technical-stack)
 
 ---
 
@@ -31,7 +33,736 @@ The application supports multiple user roles (Admin, Teller, Customer) with dist
 
 ---
 
-## Architecture Overview
+## OOAD Principles
+
+The Meridian Banking System is architected following **Object-Oriented Analysis and Design (OOAD)** principles to ensure maintainability, scalability, and professional code quality.
+
+### 1. **Encapsulation**
+**Definition**: Hiding internal implementation details and exposing only necessary functionality through public interfaces.
+
+**Implementation Examples**:
+```java
+// Customer class - encapsulates customer data
+public class Customer {
+    private int customerId;           // Private: hidden from external access
+    private String firstName;
+    private String email;
+    private Role role;
+    
+    // Public getters/setters - controlled access
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    
+    // Private helper methods
+    private void validateEmail(String email) { ... }
+}
+
+// Account class - encapsulates account operations
+public abstract class Account {
+    private String accountId;
+    protected double balance;         // Protected: subclasses can access
+    
+    // Public interface
+    public void deposit(double amount) { ... }
+    public void withdraw(double amount) { ... }
+    
+    // Protected for subclass implementation
+    protected abstract void calculateInterest() { ... }
+}
+```
+
+**Benefits**:
+- ✅ Data integrity maintained
+- ✅ Internal changes don't affect external code
+- ✅ Clear separation of concerns
+
+---
+
+### 2. **Inheritance & Polymorphism**
+**Definition**: Creating class hierarchies where subclasses inherit from parent classes and override methods for specialized behavior.
+
+**Implementation Example** - Account Types:
+```java
+// Parent class defines common behavior
+public abstract class Account {
+    protected String accountId;
+    protected double balance;
+    protected double interestRate;
+    
+    public abstract void calculateInterest();
+    public abstract String getAccountDescription();
+}
+
+// Concrete implementations for specific account types
+public class SavingsAccount extends Account {
+    public SavingsAccount() { this.interestRate = 0.05; }
+    
+    @Override
+    public void calculateInterest() {
+        double interest = balance * interestRate / 365;
+        balance += interest;
+    }
+}
+
+public class InvestmentAccount extends Account {
+    public InvestmentAccount() { this.interestRate = 0.10; }
+    
+    @Override
+    public void calculateInterest() {
+        double interest = balance * interestRate / 365;
+        balance += interest;
+    }
+}
+
+public class CertificateOfDepositAccount extends Account {
+    private LocalDate maturityDate;
+    
+    @Override
+    public void calculateInterest() {
+        if (LocalDate.now().isBefore(maturityDate)) {
+            double interest = balance * 0.06 / 365;
+            balance += interest;
+        }
+    }
+}
+```
+
+**Polymorphic Usage**:
+```java
+// Client code doesn't need to know specific type
+List<Account> accounts = customer.getAccounts();
+for (Account account : accounts) {
+    // Calls appropriate implementation based on actual type
+    account.calculateInterest();
+}
+```
+
+**Benefits**:
+- ✅ Code reusability through inheritance
+- ✅ Flexible and extensible architecture
+- ✅ New account types added without modifying existing code
+
+---
+
+### 3. **Abstraction**
+**Definition**: Defining abstract classes and interfaces to represent essential features without implementation details.
+
+**Implementation Example**:
+```java
+// Abstract base class - enforces contract for all accounts
+public abstract class Account {
+    // Abstract methods - must be implemented by subclasses
+    public abstract void calculateInterest();
+    public abstract String getAccountDescription();
+    
+    // Concrete method - common behavior
+    public void deposit(double amount) {
+        if (amount > 0) {
+            balance += amount;
+            // Log transaction
+        }
+    }
+}
+
+// DAO abstraction - database operations
+public interface AccountDAO {
+    void save(Account account);
+    Account findById(String id);
+    void update(Account account);
+    void delete(String id);
+    List<Account> findByCustomerId(int customerId);
+}
+
+// Concrete implementation
+public class AccountDAOImpl implements AccountDAO {
+    @Override
+    public void save(Account account) {
+        // SQL INSERT implementation
+    }
+    
+    @Override
+    public Account findById(String id) {
+        // SQL SELECT implementation
+        return account;
+    }
+}
+```
+
+**Benefits**:
+- ✅ Simplifies complex systems
+- ✅ Hides implementation complexity
+- ✅ Enables contract-based programming
+
+---
+
+### 4. **Single Responsibility Principle (SRP)**
+**Definition**: Each class should have only one reason to change (one responsibility).
+
+**Implementation Examples**:
+```java
+// ✅ GOOD: Single responsibility
+public class Customer {
+    // Responsibility: Manage customer data
+    private String firstName;
+    private String email;
+    
+    public String getFirstName() { return firstName; }
+    public String getEmail() { return email; }
+}
+
+public class PasswordUtil {
+    // Responsibility: Handle password hashing/verification
+    public static String hashPassword(String password) { ... }
+    public static boolean verifyPassword(String plain, String hash) { ... }
+}
+
+public class CustomerDAO {
+    // Responsibility: Persist customer data to database
+    public void save(Customer customer) { ... }
+    public Customer findById(int id) { ... }
+}
+
+// ✅ GOOD: Service layer handles business logic
+public class Bank {
+    // Responsibility: Coordinate banking operations
+    public void transferFunds(String fromAccount, String toAccount, double amount) {
+        Account from = accountDAO.findById(fromAccount);
+        Account to = accountDAO.findById(toAccount);
+        
+        if (from.getBalance() >= amount) {
+            from.withdraw(amount);
+            to.deposit(amount);
+            
+            Transaction transaction = new Transaction(...);
+            transactionDAO.save(transaction);
+        }
+    }
+}
+
+// ❌ BAD: Multiple responsibilities (violates SRP)
+public class CustomerAndPersistence {
+    private String firstName;
+    
+    public void save() {
+        // Database operation mixed with entity logic
+        Connection conn = DriverManager.getConnection(...);
+        PreparedStatement ps = conn.prepareStatement(...);
+        // ...
+    }
+}
+```
+
+**Benefits**:
+- ✅ Classes are easier to understand and maintain
+- ✅ Reduced coupling between classes
+- ✅ Improved testability
+
+---
+
+### 5. **Open/Closed Principle (OCP)**
+**Definition**: Classes should be open for extension but closed for modification.
+
+**Implementation Example**:
+```java
+// ✅ GOOD: New account types added without modifying existing code
+public abstract class Account {
+    public abstract void calculateInterest();
+}
+
+public class SavingsAccount extends Account {
+    @Override
+    public void calculateInterest() { ... }
+}
+
+// NEW: Add new account type without changing existing code
+public class CryptoCurrencyAccount extends Account {
+    @Override
+    public void calculateInterest() {
+        // New implementation for crypto accounts
+    }
+}
+
+// ✅ GOOD: Strategy pattern for transaction processing
+public interface TransactionStrategy {
+    void process(Transaction transaction);
+}
+
+public class DepositStrategy implements TransactionStrategy {
+    @Override
+    public void process(Transaction transaction) { ... }
+}
+
+public class WithdrawStrategy implements TransactionStrategy {
+    @Override
+    public void process(Transaction transaction) { ... }
+}
+
+// New transaction types supported without modifying existing code
+public class LoanPaymentStrategy implements TransactionStrategy {
+    @Override
+    public void process(Transaction transaction) { ... }
+}
+```
+
+**Benefits**:
+- ✅ Code remains stable when requirements change
+- ✅ New features added through extension
+- ✅ Reduced risk of breaking existing functionality
+
+---
+
+### 6. **Liskov Substitution Principle (LSP)**
+**Definition**: Subclasses should be substitutable for parent classes without breaking functionality.
+
+**Implementation Example**:
+```java
+// ✅ GOOD: All account subclasses can substitute Account
+public class Bank {
+    public void accrueInterest(List<Account> accounts) {
+        for (Account account : accounts) {
+            // Any Account subclass can be used here
+            if (account instanceof InvestmentAccount) {
+                account.calculateInterest();  // Works for InvestmentAccount
+            }
+            if (account instanceof SavingsAccount) {
+                account.calculateInterest();  // Works for SavingsAccount
+            }
+            if (account instanceof CertificateOfDepositAccount) {
+                account.calculateInterest();  // Works for CertificateOfDepositAccount
+            }
+        }
+    }
+}
+
+// ✅ GOOD: Role-based access control
+public void accessScreen(Role role) {
+    switch(role) {
+        case ADMIN:
+            showAdminDashboard();      // Admin can access
+            break;
+        case TELLER:
+            showTellerDashboard();     // Teller can access
+            break;
+        case CUSTOMER:
+            showCustomerDashboard();   // Customer can access
+            break;
+    }
+    // Each role properly substitutes for the next
+}
+```
+
+**Benefits**:
+- ✅ Polymorphism works correctly
+- ✅ No unexpected behavior from subclasses
+- ✅ Contracts maintained throughout hierarchy
+
+---
+
+### 7. **Dependency Inversion Principle (DIP)**
+**Definition**: Depend on abstractions, not concretions.
+
+**Implementation Example**:
+```java
+// ❌ BAD: High-level depends on low-level (tight coupling)
+public class Bank {
+    private MySQLCustomerDAO customerDAO;  // Depends on concrete class
+    
+    public Bank() {
+        this.customerDAO = new MySQLCustomerDAO();
+    }
+}
+
+// ✅ GOOD: Depend on abstraction
+public interface CustomerDAO {
+    Customer findById(int id);
+    void save(Customer customer);
+}
+
+public class MySQLCustomerDAO implements CustomerDAO {
+    @Override
+    public Customer findById(int id) { ... }
+    
+    @Override
+    public void save(Customer customer) { ... }
+}
+
+public class Bank {
+    private CustomerDAO customerDAO;  // Depends on interface
+    
+    // Dependency injection
+    public Bank(CustomerDAO customerDAO) {
+        this.customerDAO = customerDAO;
+    }
+    
+    public Customer getCustomer(int id) {
+        return customerDAO.findById(id);  // Works with any implementation
+    }
+}
+
+// Can switch implementations easily without changing Bank class
+Bank bank = new Bank(new MySQLCustomerDAO());
+// or
+Bank bank = new Bank(new MongoDBCustomerDAO());
+// or
+Bank bank = new Bank(new MockCustomerDAO());  // For testing
+```
+
+**Benefits**:
+- ✅ Loose coupling between modules
+- ✅ Easy to test with mock implementations
+- ✅ Flexible and interchangeable components
+
+---
+
+### 8. **Composition Over Inheritance**
+**Definition**: Favor composition (has-a) over inheritance (is-a) for better flexibility.
+
+**Implementation Example**:
+```java
+// ✅ GOOD: Composition - Customer HAS accounts
+public class Customer {
+    private String customerId;
+    private String firstName;
+    private List<Account> accounts;  // Has-a relationship
+    
+    public void addAccount(Account account) {
+        accounts.add(account);
+    }
+    
+    public List<Account> getAccounts() {
+        return accounts;
+    }
+}
+
+// ✅ GOOD: Account HAS transactions instead of inheriting
+public class Account {
+    private String accountId;
+    protected double balance;
+    private List<Transaction> transactions;  // Has-a relationship
+    
+    public void addTransaction(Transaction transaction) {
+        transactions.add(transaction);
+    }
+    
+    public List<Transaction> getTransactions() {
+        return transactions;
+    }
+}
+
+// ✅ GOOD: Flexibility through composition
+public class AuditService {
+    private AuditDAO auditDAO;  // Dependency injection
+    private Logger logger;       // Composition
+    
+    public AuditService(AuditDAO auditDAO, Logger logger) {
+        this.auditDAO = auditDAO;
+        this.logger = logger;
+    }
+    
+    public void logAction(String action) {
+        logger.log(action);
+        auditDAO.save(new AuditLog(action));
+    }
+}
+```
+
+**Benefits**:
+- ✅ Greater flexibility than inheritance
+- ✅ Reduces fragile base class problem
+- ✅ Easier to change behavior at runtime
+
+---
+
+### 9. **DRY Principle (Don't Repeat Yourself)**
+**Definition**: Avoid code duplication; extract common logic into reusable methods.
+
+**Implementation Example**:
+```java
+// ❌ BAD: Repeated validation logic
+public class SavingsAccount extends Account {
+    public void deposit(double amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Invalid amount");
+        }
+        balance += amount;
+    }
+}
+
+public class InvestmentAccount extends Account {
+    public void deposit(double amount) {
+        if (amount <= 0) {  // Repeated validation
+            throw new IllegalArgumentException("Invalid amount");
+        }
+        balance += amount;
+    }
+}
+
+// ✅ GOOD: Extracted common logic
+public abstract class Account {
+    protected void validateAmount(double amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Invalid amount");
+        }
+    }
+    
+    public void deposit(double amount) {
+        validateAmount(amount);
+        balance += amount;
+    }
+}
+
+// ✅ GOOD: Utility class for common operations
+public class ValidationUtil {
+    public static void validateEmail(String email) {
+        if (email == null || !email.contains("@")) {
+            throw new IllegalArgumentException("Invalid email");
+        }
+    }
+    
+    public static void validatePassword(String password) {
+        if (password == null || password.length() < 6) {
+            throw new IllegalArgumentException("Password too short");
+        }
+    }
+}
+
+public class CustomerController {
+    public void registerCustomer(String email, String password) {
+        ValidationUtil.validateEmail(email);      // Reused
+        ValidationUtil.validatePassword(password); // Reused
+        // ... registration logic
+    }
+}
+```
+
+**Benefits**:
+- ✅ Easier maintenance - fix in one place
+- ✅ Reduced code size and complexity
+- ✅ Consistency across codebase
+
+---
+
+### 10. **Design Patterns Used**
+
+#### **DAO Pattern** (Data Access Object)
+```java
+// Abstracts database operations
+public interface CustomerDAO {
+    void save(Customer customer);
+    Customer findById(int id);
+    void update(Customer customer);
+    List<Customer> findAll();
+}
+
+public class CustomerDAOImpl implements CustomerDAO {
+    @Override
+    public void save(Customer customer) {
+        // Database operation
+    }
+}
+```
+
+#### **Factory Pattern** (Object Creation)
+```java
+public class AccountFactory {
+    public static Account createAccount(String type, Customer customer) {
+        switch(type) {
+            case "SAVINGS":
+                return new SavingsAccount(customer);
+            case "INVESTMENT":
+                return new InvestmentAccount(customer);
+            case "CHEQUE":
+                return new ChequeAccount(customer);
+            default:
+                throw new IllegalArgumentException("Unknown type");
+        }
+    }
+}
+```
+
+#### **Strategy Pattern** (Interchangeable Algorithms)
+```java
+public interface InterestStrategy {
+    double calculateInterest(double balance);
+}
+
+public class SavingsStrategy implements InterestStrategy {
+    @Override
+    public double calculateInterest(double balance) {
+        return balance * 0.05 / 365;
+    }
+}
+
+public class InvestmentStrategy implements InterestStrategy {
+    @Override
+    public double calculateInterest(double balance) {
+        return balance * 0.10 / 365;
+    }
+}
+```
+
+#### **MVC Pattern** (Model-View-Controller)
+```
+Model: Customer, Account, Transaction classes
+View: JavaFX UI components
+Controller: LoginController, AccountController
+```
+
+---
+
+### OOAD Principles Summary
+
+| Principle | Purpose | Benefit |
+|-----------|---------|---------|
+| **Encapsulation** | Hide internal details | Data protection & control |
+| **Inheritance** | Share common code | Code reusability |
+| **Polymorphism** | Same interface, different behavior | Flexibility & extensibility |
+| **Abstraction** | Hide complexity | Simplified interfaces |
+| **SRP** | One responsibility per class | Easy maintenance |
+| **OCP** | Extend without modifying | Stable codebase |
+| **LSP** | Substitutable subclasses | Correct polymorphism |
+| **DIP** | Depend on abstractions | Loose coupling |
+| **Composition** | Favor has-a over is-a | Greater flexibility |
+| **DRY** | Avoid duplication | Maintainable code |
+
+---
+
+## User Credentials
+
+All users in the Meridian Banking System with their login credentials and access levels:
+
+### Administrator Account
+
+| Username | Email | Password | Role | Access Level |
+|----------|-------|----------|------|--------------|
+| thato.admin | thato.matlhomantsho@bank.com | AdminPass123 | **ADMIN** | Full System Access |
+
+**Admin Capabilities**:
+- View all users in the system
+- Approve/reject customer registrations
+- Create and manage teller accounts
+- Monitor all accounts and transactions
+- View system statistics and audit logs
+- Manage account closures
+
+---
+
+### Teller Accounts
+
+| Username | Email | Password | Role | Access Level |
+|----------|-------|----------|------|--------------|
+| teller.one | teller1@bank.com | TellerPass123 | **TELLER** | Customer Support |
+| teller.two | teller2@bank.com | TellerPass456 | **TELLER** | Customer Support |
+
+**Teller Capabilities**:
+- Verify customer accounts and information
+- Assist with account operations
+- Support transaction processing
+- View customer account details
+- Process account opening requests
+
+---
+
+### Customer Accounts
+
+| Username | Email | Password | Role | Access Level |
+|----------|-------|----------|------|--------------|
+| naledi.customer | naledi.customer@bank.com | CustomerPass123 | **CUSTOMER** | Own Account Only |
+| simone.customer | simone.customer@bank.com | CustomerPass456 | **CUSTOMER** | Own Account Only |
+| john.doe | john.doe@bank.com | JohnPass789 | **CUSTOMER** | Own Account Only |
+| jane.smith | jane.smith@bank.com | JanePass012 | **CUSTOMER** | Own Account Only |
+
+**Customer Capabilities**:
+- View own accounts
+- Deposit and withdraw funds
+- Transfer money between own accounts
+- View transaction history
+- Monitor investment accounts
+- Access account statements
+
+---
+
+### Test User Accounts (Development)
+
+| Username | Email | Password | Role | Purpose |
+|----------|-------|----------|------|---------|
+| test.admin | test.admin@bank.com | TestAdmin123 | **ADMIN** | Testing admin functions |
+| test.teller | test.teller@bank.com | TestTeller123 | **TELLER** | Testing teller functions |
+| test.customer | test.customer@bank.com | TestCustomer123 | **CUSTOMER** | Testing customer functions |
+
+---
+
+### Quick Login Reference
+
+**For Testing Authentication**:
+```
+Admin Login:
+  Email: thato.matlhomantsho@bank.com
+  Password: AdminPass123
+
+Teller Login:
+  Email: teller1@bank.com
+  Password: TellerPass123
+
+Customer Login:
+  Email: naledi.customer@bank.com
+  Password: CustomerPass123
+```
+
+**Password Requirements**:
+- Minimum 6 characters
+- Alphanumeric (letters and numbers)
+- Case-sensitive
+- Special characters recommended
+
+**Account Status**:
+- ✅ Admin accounts: Auto-approved and active
+- ✅ Teller accounts: Created by admin, auto-active
+- ⏳ Customer accounts: Require admin approval before login
+- 🔒 Accounts: Locked after 3 failed login attempts (future enhancement)
+
+---
+
+### User Data Structure in Database
+
+Each user record in the database contains:
+
+```sql
+CREATE TABLE users (
+  user_id INT PRIMARY KEY AUTO_INCREMENT,
+  username VARCHAR(50) UNIQUE NOT NULL,
+  email VARCHAR(100) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,        -- Bcrypt hashed password
+  first_name VARCHAR(50) NOT NULL,
+  last_name VARCHAR(50) NOT NULL,
+  phone VARCHAR(20),
+  address VARCHAR(255),
+  role ENUM('ADMIN', 'TELLER', 'CUSTOMER') DEFAULT 'CUSTOMER',
+  approved BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
+
+**Access Control**:
+```
+ADMIN Role:
+  - Access: All screens and functions
+  - Permissions: Create, Read, Update, Delete all data
+  - Audit: All actions logged
+
+TELLER Role:
+  - Access: Customer verification, account support screens
+  - Permissions: Read customer data, verify accounts, assist transactions
+  - Audit: Customer service actions logged
+
+CUSTOMER Role:
+  - Access: Own dashboard, accounts, transactions only
+  - Permissions: View own data, deposit/withdraw, transfer (own accounts)
+  - Audit: Personal financial transactions logged
+```
+
+---
 
 ### MVC (Model-View-Controller) Pattern
 
